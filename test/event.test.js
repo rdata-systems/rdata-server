@@ -6,29 +6,27 @@ const RDataServer = require('../lib/rdata-server');
 const helper = require('./helper');
 const WebSocket = require('ws');
 const assert = require('assert');
-const DatabaseCleaner = require('database-cleaner');
 const mocha = require('mocha');
 const beforeEach = mocha.beforeEach;
+const afterEach = mocha.afterEach;
 
-const databaseCleaner = new DatabaseCleaner('mongodb');
-const connect = require('mongodb').connect;
-var dbUrlTest = process.env.DB_URL_TEST || 'mongodb://localhost:27017/test';
+var dbUrlTest = helper.dbUrl;
 
 const jsonRpcVersion = helper.jsonRpcVersion;
 const port = helper.port;
 
-describe('hooks', function() {
-    beforeEach(function() {
-        connect(dbUrlTest, function (err, db) {
-            databaseCleaner.clean(db, function () {
-                db.close();
-            });
-        });
-    });
-});
-
+const collectionName = require('../lib/event').collectionName;
 
 describe('RDataEvent', function() {
+
+    beforeEach(function(done) {
+        helper.cleanTestDatabase(done);
+    });
+
+    afterEach(function(done){
+        helper.cleanTestDatabase(done);
+    });
+
     it('logs the event', function(done){
         var server = new RDataServer({ port: port, dbUrl: dbUrlTest });
         var clientDate = new Date().getTime();
@@ -44,8 +42,17 @@ describe('RDataEvent', function() {
                 ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
                     assert(answer.result);
-                    server.close(function () {
-                        done();
+
+                    // Lets find our event in test database
+                    helper.getTestDatabase(function(db){
+                        db.collection(collectionName).find().limit(1).next(function(err, event){
+                            assert(event.data.clientDate == clientDate);
+
+                            // Close the server
+                            server.close(function () {
+                                done();
+                            });
+                        });
                     });
                 });
             });

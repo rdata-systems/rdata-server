@@ -4,9 +4,13 @@ const JsonRpc = require('../lib/json-rpc');
 const helper = require('./helper');
 const WebSocket = require('ws');
 const assert = require('assert');
+const mocha = require('mocha');
+const beforeEach = mocha.beforeEach;
+const afterEach = mocha.afterEach;
 
 const jsonRpcVersion = helper.jsonRpcVersion;
 const port = helper.port;
+const dbUrl = helper.dbUrl;
 
 
 const testCommand = function(db, client, params, callback){
@@ -20,8 +24,17 @@ var customAuthCommand = function(db, client, params, callback){
 };
 
 describe('RDataServer', function() {
+
+    beforeEach(function(done) {
+        helper.cleanTestDatabase(done);
+    });
+
+    afterEach(function(done){
+        helper.cleanTestDatabase(done);
+    });
+
     it('returns a callback when server is started', function(done){
-        var server = new RDataServer({ port: port });
+        var server = new RDataServer({ port: port, dbUrl: dbUrl });
         server.runServer(function(){
             server.close(function(){
                 done();
@@ -30,7 +43,7 @@ describe('RDataServer', function() {
     });
 
     it('accepts a single connection', function (done) {
-        var server = new RDataServer({ port: port });
+        var server = new RDataServer({ port: port, dbUrl: dbUrl });
         server.runServer(function(){
             var ws = new WebSocket('ws://localhost:'+port);
         });
@@ -42,7 +55,7 @@ describe('RDataServer', function() {
     });
 
     it('should not accept request without id', function(done){
-        var server = new RDataServer({ port: port, anonymousCommands: { test: testCommand } });
+        var server = new RDataServer({ port: port, dbUrl: dbUrl, anonymousCommands: { test: testCommand } });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "test",
@@ -66,7 +79,7 @@ describe('RDataServer', function() {
     });
 
     it('should not accept request without valid method', function(done){
-        var server = new RDataServer({ port: port, commands: { test: testCommand } });
+        var server = new RDataServer({ port: port, dbUrl: dbUrl, commands: { test: testCommand } });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "invalidMethod",
@@ -90,7 +103,7 @@ describe('RDataServer', function() {
     });
 
     it('should not accept non-anonymous command without authentication', function(done){
-        var server = new RDataServer({ port: port, commands: { test: testCommand } });
+        var server = new RDataServer({ port: port, dbUrl: dbUrl, commands: { test: testCommand } });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "test",
@@ -115,7 +128,7 @@ describe('RDataServer', function() {
     });
 
     it('should accept anonymous command without authentication', function(done){
-        var server = new RDataServer({ port: port, anonymousCommands: {"test": testCommand } });
+        var server = new RDataServer({ port: port, dbUrl: dbUrl, anonymousCommands: {"test": testCommand } });
         var testParams = {"testParam": 123};
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
@@ -140,7 +153,7 @@ describe('RDataServer', function() {
     });
 
     it('accepts a default authentication request', function(done){
-        var server = new RDataServer({ port: port });
+        var server = new RDataServer({ port: port, dbUrl: dbUrl });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "authenticate",
@@ -165,7 +178,7 @@ describe('RDataServer', function() {
 
     it('accepts a custom authentication request', function(done){
         var token = "token123";
-        var server = new RDataServer({ port: port, anonymousCommands: { "authenticate": customAuthCommand } });
+        var server = new RDataServer({ port: port, dbUrl: dbUrl, anonymousCommands: { "authenticate": customAuthCommand } });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "authenticate",
@@ -189,7 +202,7 @@ describe('RDataServer', function() {
     });
 
     it('should accept non-anonymous command after authentication', function(done){
-        var server = new RDataServer({ port: port, commands: { test: testCommand } });
+        var server = new RDataServer({ port: port, dbUrl: dbUrl, commands: { test: testCommand } });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "test",

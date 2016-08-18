@@ -1,13 +1,22 @@
 const RDataServer = require('../lib/rdata-server');
+const errors = require('../lib/errors');
+const JsonRpc = require('../lib/json-rpc');
+const helper = require('./helper');
 const WebSocket = require('ws');
 const assert = require('assert');
 
-const jsonRpcVersion = "2.0";
-const port = 8889;
+const jsonRpcVersion = helper.jsonRpcVersion;
+const port = helper.port;
 
 
-const testCommand = function(client, params, callback){
+const testCommand = function(db, client, params, callback){
     callback(params);
+};
+
+var customAuthCommand = function(db, client, params, callback){
+    client.userId = params.userId;
+    client.authToken = params.authToken;
+    callback(client.authToken);
 };
 
 describe('RDataServer', function() {
@@ -32,8 +41,8 @@ describe('RDataServer', function() {
         });
     });
 
-    it('should not accept non-anonymous command without authentication', function(done){
-        var server = new RDataServer({ port: port, commands: { test: testCommand } });
+    it('should not accept request without id', function(done){
+        var server = new RDataServer({ port: port, anonymousCommands: { test: testCommand } });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "test",
@@ -46,6 +55,56 @@ describe('RDataServer', function() {
             });
             ws.on('message', function message(data, flags){
                 var answer = JSON.parse(data);
+                assert(answer.id == null);
+                assert(answer.error);
+                assert(answer.error.code == (new errors.JsonRpcErrors.NotificationsNotSupported()).code);
+                server.close(function () {
+                    done();
+                })
+            });
+        });
+    });
+
+    it('should not accept request without valid method', function(done){
+        var server = new RDataServer({ port: port, commands: { test: testCommand } });
+        var testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "invalidMethod",
+            "params": {"testParam": 123},
+            "id": 1
+        });
+        server.runServer(function(){
+            helper.connectAndAuthenticate(function authenticated(ws) {
+                ws.send(testRequest);
+                ws.on('message', function message(data, flags){
+                    var answer = JSON.parse(data);
+                    assert(answer.id == 1);
+                    assert(answer.error);
+                    assert(answer.error.code == (new JsonRpc.JsonRpcErrors.MethodNotFound()).code);
+                    server.close(function () {
+                        done();
+                    })
+                });
+            });
+        });
+    });
+
+    it('should not accept non-anonymous command without authentication', function(done){
+        var server = new RDataServer({ port: port, commands: { test: testCommand } });
+        var testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "test",
+            "params": {"testParam": 123},
+            "id": 1
+        });
+        server.runServer(function(){
+            var ws = new WebSocket('ws://localhost:'+port);
+            ws.on('open', function open(){
+                ws.send(testRequest);
+            });
+            ws.on('message', function message(data, flags){
+                var answer = JSON.parse(data);
+                assert.equal(answer.id, 1);
                 assert(answer.error);
                 assert(answer.error.code == -31000); // NonAuthenticated
                 server.close(function () {
@@ -61,7 +120,8 @@ describe('RDataServer', function() {
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "test",
-            "params": testParams
+            "params": testParams,
+            "id": 1
         });
         server.runServer(function(){
             var ws = new WebSocket('ws://localhost:'+port);
@@ -70,6 +130,7 @@ describe('RDataServer', function() {
             });
             ws.on('message', function message(data, flags){
                 var answer = JSON.parse(data);
+                assert.equal(answer.id, 1);
                 assert.deepEqual(answer.result, testParams);
                 server.close(function () {
                     done();
@@ -83,7 +144,8 @@ describe('RDataServer', function() {
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "authenticate",
-            "params": {"userId": "testUser"}
+            "params": {"userId": "testUser"},
+            "id": 1
         });
         server.runServer(function(){
             var ws = new WebSocket('ws://localhost:'+port);
@@ -92,6 +154,7 @@ describe('RDataServer', function() {
             });
             ws.on('message', function message(data, flags){
                 var answer = JSON.parse(data);
+                assert.equal(answer.id, 1);
                 assert(answer.result == true);
                 server.close(function () {
                     done();
@@ -101,17 +164,13 @@ describe('RDataServer', function() {
     });
 
     it('accepts a custom authentication request', function(done){
-        var customAuthCommand = function(client, params, callback){
-            client.userId = params.userId;
-            client.authToken = params.authToken;
-            callback(client.authToken);
-        };
         var token = "token123";
         var server = new RDataServer({ port: port, anonymousCommands: { "authenticate": customAuthCommand } });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "authenticate",
-            "params": {"userId": "testUser", "authToken": token }
+            "params": {"userId": "testUser", "authToken": token },
+            "id": 1
         });
         server.runServer(function(){
             var ws = new WebSocket('ws://localhost:'+port);
@@ -120,9 +179,36 @@ describe('RDataServer', function() {
             });
             ws.on('message', function message(data, flags){
                 var answer = JSON.parse(data);
+                assert.equal(answer.id, 1);
                 assert(answer.result == token);
-                done();
+                server.close(function () {
+                    done();
+                })
             });
         });
     });
+
+    it('should accept non-anonymous command after authentication', function(done){
+        var server = new RDataServer({ port: port, commands: { test: testCommand } });
+        var testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "test",
+            "params": {"testParam": 123},
+            "id": 2
+        });
+        server.runServer(function(){
+            helper.connectAndAuthenticate(function authenticated(ws) {
+                ws.send(testRequest);
+                ws.on('message', function message(data, flags){
+                    var answer = JSON.parse(data);
+                    assert.equal(answer.result.testParam, 123);
+                    server.close(function () {
+                        done();
+                    })
+                });
+            });
+        });
+    });
+
+
 });

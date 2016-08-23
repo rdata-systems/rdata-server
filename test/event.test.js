@@ -2,7 +2,7 @@
  * Events
  */
 
-const RDataServer = require('../lib/rdata-server');
+const RDataServer = require('../lib/server');
 const helper = require('./helper');
 const WebSocket = require('ws');
 const assert = require('assert');
@@ -15,16 +15,16 @@ var dbUrlTest = helper.dbUrl;
 const jsonRpcVersion = helper.jsonRpcVersion;
 const port = helper.port;
 
-const collectionName = require('../lib/event').collectionName;
+const collectionName = require('../lib/event').eventCollectionName;
 
 describe('RDataEvent', function() {
 
     beforeEach(function(done) {
-        helper.cleanTestDatabase(done);
+        helper.clearTestDatabase(done);
     });
 
     afterEach(function(done){
-        helper.cleanTestDatabase(done);
+        helper.clearTestDatabase(done);
     });
 
     it('logs the event', function(done){
@@ -37,7 +37,12 @@ describe('RDataEvent', function() {
             "id": 1
         });
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(ws) {
+            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                if(error){
+                    done(error);
+                    return;
+                }
+
                 ws.send(testRequest);
                 ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
@@ -49,8 +54,8 @@ describe('RDataEvent', function() {
                             assert(event.data.clientDate == clientDate);
 
                             // Close the server
-                            server.close(function () {
-                                done();
+                            server.close(function(error) {
+                                done(error);
                             });
                         });
                     });

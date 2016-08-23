@@ -1,4 +1,4 @@
-var RDataServer = require('./lib/rdata-server.js');
+var RDataServer = require('./lib/server.js');
 
 var server = new RDataServer({
     host: '0.0.0.0',

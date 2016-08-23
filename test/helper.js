@@ -14,11 +14,16 @@ module.exports = {
     dbUrl: dbUrl,
 
     /**
-     * Cleans the test database
+     * Clears the test database
      * @param {function} callback
      */
-    cleanTestDatabase: function(callback){
+    clearTestDatabase: function(callback){
         connect(dbUrl, function (err, db) {
+            if(err) {
+                callback(err);
+                return;
+            }
+
             databaseCleaner.clean(db, function () {
                 db.close(function(){
                     if(callback)
@@ -39,8 +44,7 @@ module.exports = {
     },
 
     /**
-     * Connects to the server and authenticates using default authentication.
-     * After that, returns callback
+     * Connects to the server and authenticates using the default authentication method.
      * @param {function} callback
      */
     connectAndAuthenticate: function (callback) {
@@ -58,7 +62,7 @@ module.exports = {
             var answer = JSON.parse(data);
             assert(answer.result);
             ws.removeListener('message', onMessage);
-            callback(ws);
+            callback(null, ws);
         };
         ws.on('message', onMessage);
     },

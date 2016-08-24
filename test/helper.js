@@ -39,7 +39,7 @@ module.exports = {
      */
     getTestDatabase: function(callback){
         connect(dbUrl, function (err, db) {
-            callback(db);
+            callback(err, db);
         });
     },
 

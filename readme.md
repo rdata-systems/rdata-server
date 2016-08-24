@@ -25,15 +25,10 @@ server.close(function(error) {
 In this example, if error is presented it will be passed to the done()
 
 ## TODO:
-1. Re-factor error handling
+0. Implement batch request functionality, using json-rpc 2 batch requests
 
-⋅⋅⋅Every EventEmitter should handle it's own errors with on('error')
+1. Make sure that EndContextRecursive is not crashing the server (implement max. recursion depth)
 
-2. (!!!) Replace ugly jsonparse with some other streaming async json parser. 
+2. Make sure that all user contexts are properly closed when server is terminated
 
-⋅⋅⋅If there is no good replacement, maybe write our own Connection class.
-⋅⋅⋅Something like a buffer that counts "{" and "}" and knows when json stream is ready to be parsed
-
-3. Check if it's necessary to wait all modules finish doing dbInit before running up the websocket server (and if yes, think about how to do it.. using promises maybe?)
-
-4. Re-think namings.. rename events to something like DataEvent ?
+3. Write tests to cover auto-events (events that happen when user sends a specific request, like startContextEvent)

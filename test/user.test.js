@@ -1,5 +1,5 @@
 /**
- * Event tests
+ * User tests
  */
 
 const RDataServer = require('../lib/server');
@@ -14,9 +14,9 @@ var dbUrlTest = helper.dbUrl;
 
 const jsonRpcVersion = helper.jsonRpcVersion;
 
-const eventCollectionName = require('../lib/event').eventCollectionName;
+const userVariableCollectionName = require('../lib/user').userVariableCollectionName;
 
-describe('RDataEvent', function() {
+describe('RDataUserVariable', function() {
 
     beforeEach(function(done) {
         helper.clearTestDatabase(done);
@@ -26,13 +26,13 @@ describe('RDataEvent', function() {
         helper.clearTestDatabase(done);
     });
 
-    it('logs the event', function(done){
+    it('inserts user variable', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
-        var clientDate = new Date().getTime();
+        var variableValue = { "var": 1234 };
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
-            "method": "logEvent",
-            "params": {"eventType": "TestEvent", "data": { "clientDate": clientDate }},
+            "method": "insertVariable",
+            "params": {"key": "TestVariable", "value": variableValue},
             "id": 1
         });
         server.runServer(function(){
@@ -47,16 +47,15 @@ describe('RDataEvent', function() {
                     var answer = JSON.parse(data);
                     assert(answer.result);
 
-                    // Lets find our event in test database
+                    // Lets find our variable in the test database
                     helper.getTestDatabase(function(db){
-                        db.collection(eventCollectionName).find().limit(1).next(function(err, event){
+                        db.collection(userVariableCollectionName).find({"key": "TestVariable"}).limit(1).next(function(err, variable){
                             if(err){
                                 done(err);
                                 return;
                             }
-                            assert(event);
-                            assert(event.data.clientDate == clientDate);
-
+                            assert(variable);
+                            assert.deepEqual(variable.value, variableValue);
                             // Close the server
                             server.close(function(error) {
                                 done(error);

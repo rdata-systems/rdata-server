@@ -1,16 +1,16 @@
 const assert = require('assert');
 const WebSocket = require('ws');
+const RDataServer = require('../lib/server');
 const DatabaseCleaner = require('database-cleaner');
 const databaseCleaner = new DatabaseCleaner('mongodb');
 const connect = require('mongodb').connect;
 
 const jsonRpcVersion = "2.0";
-const port = 8899;
 const dbUrl =  process.env.DB_URL_TEST || 'mongodb://localhost:27017/test';
 
 module.exports = {
     jsonRpcVersion: jsonRpcVersion,
-    port: port,
+    port: 8899,
     dbUrl: dbUrl,
 
     /**
@@ -54,7 +54,7 @@ module.exports = {
             "params": {userId: "test"},
             "id": 1
         });
-        var ws = new WebSocket('ws://localhost:' + port);
+        var ws = new WebSocket('ws://localhost:' + module.exports.port);
         ws.on('open', function open() {
             ws.send(authRequest);
         });
@@ -65,5 +65,5 @@ module.exports = {
             callback(null, ws);
         };
         ws.on('message', onMessage);
-    },
+    }
 };

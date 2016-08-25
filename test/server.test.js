@@ -241,4 +241,95 @@ describe('RDataServer', function() {
         });
     });
 
+    it('should accept batch request in array and return multiple responses in array', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl });
+        server.exposeMethod('test', testMethod, true);
+        var requests = [
+            {
+                "jsonrpc": jsonRpcVersion,
+                "method": "test",
+                "params": {"testParam": 123},
+                "id": 0
+            },
+            {
+                "jsonrpc": jsonRpcVersion,
+                "method": "test",
+                "params": {"testParam": 456},
+                "id": 1
+            }
+        ];
+        server.runServer(function(){
+            var ws = new WebSocket('ws://localhost:'+helper.port);
+            ws.on('open', function open(){
+                ws.send(JSON.stringify(requests));
+            });
+            ws.on('message', function message(data, flags){
+                var answer = JSON.parse(data);
+                assert(Array.isArray(answer));
+                assert.equal(answer.length, 2);
+
+                // Responses order is not guaranteed, client must use id to identify them
+                answer.forEach(function(response){
+                    var id = response.id;
+                    assert.deepEqual(requests[id].params, response.result);
+                });
+                server.close(function(error) {
+                    done(error);
+                });
+            });
+        });
+    });
+
+    it('should correctly accept batch request with invalid requests and process only valid ones', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl });
+        server.exposeMethod('test', testMethod, true);
+        var requests = [
+            {},
+            {
+                "jsonrpc": jsonRpcVersion,
+                "method": "INVALID_METHOD_NAME",
+                "params": {"testParam": 123},
+                "id": 1
+            },
+            {
+                "jsonrpc": jsonRpcVersion,
+                "method": "test",
+                "params": {"testParam": 456},
+                "id": 2
+            }
+        ];
+        server.runServer(function(){
+            var ws = new WebSocket('ws://localhost:'+helper.port);
+            ws.on('open', function open(){
+                ws.send(JSON.stringify(requests));
+            });
+            ws.on('message', function message(data, flags){
+                var answer = JSON.parse(data);
+                assert(Array.isArray(answer));
+                assert.equal(answer.length, 3);
+                var validResponseFound=false, invalidResponseFound=false, invalidMethodResponseFound=false;
+
+                // Responses order is not guaranteed, client must use id to identify them. So let's find all 3 responses
+                answer.forEach(function(response){
+                    if(response.id !== null && response.result && requests[response.id].params.testParam == response.result.testParam){
+                        validResponseFound = true;
+                    }
+                    if(response.id === null && response.error.code == (new JsonRpc.JsonRpcErrors.InvalidRequest()).code){
+                        invalidResponseFound = true;
+                    }
+                    if(response.id !== null && response.error != null && response.error.code == (new JsonRpc.JsonRpcErrors.MethodNotFound()).code){
+                        invalidMethodResponseFound = true;
+                    }
+                });
+                assert(validResponseFound);
+                assert(invalidResponseFound);
+                assert(invalidMethodResponseFound);
+                server.close(function(error) {
+                    done(error);
+                });
+            });
+        });
+    });
+
+
 });

@@ -1,0 +1,8 @@
+language: node_js
+node_js:
+  - "node"
+
+services:
+  - mongodb
+env:
+  - DB_URL_TEST=mongodb://localhost:27017/test

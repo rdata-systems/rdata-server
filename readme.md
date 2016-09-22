@@ -32,3 +32,6 @@ The package includes standard server.js bootstrap script that you can use.
 - [Contexts](https://github.com/rdata-systems/rdata-server/wiki/3.-Contexts)
 - [User Variables](https://github.com/rdata-systems/rdata-server/wiki/4.-User-Variables)
 - [Extending the functionality](https://github.com/rdata-systems/rdata-server/wiki/5.-Extending-the-functionality)
+
+## Examples
+For more examples, see [**test**](https://github.com/rdata-systems/rdata-server/tree/master/test) folder.

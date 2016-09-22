@@ -2,6 +2,8 @@
 
 Based on WebSockets, Json-RPC 2.0 and MongoDB
 
+[![Build Status](https://travis-ci.org/rdata-systems/rdata-server.svg?branch=master)](https://travis-ci.org/rdata-systems/rdata-server)
+
 ## Basic usage
 ~~~~ 
 var RDataServer = require('rdata-server');

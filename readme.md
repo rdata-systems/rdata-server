@@ -19,16 +19,16 @@ RDataServer options:
 - **host** - Server host
 - **Port** - Server port
 - **dbUrl** - Connection url of the MongoDB
-- **exposed** - dictionary with exposed methods. Contains methodName and method. See: exposing new methods
-- **exposedAnonymously** - dictionary with anonymously exposed methods. See: exposing new methods
-- **controllers** - dictionary with custom controllers. See: exposing custom controllers
+- **exposed** - dictionary with exposed methods. Contains methodName and method. See: [Extending the functionality](https://github.com/rdata-systems/rdata-server/wiki/5.-Extending-the-functionality)
+- **exposedAnonymously** - dictionary with anonymously exposed methods. See: [Extending the functionality](https://github.com/rdata-systems/rdata-server/wiki/5.-Extending-the-functionality)
+- **controllers** - dictionary with custom controllers. See: [Extending the functionality](https://github.com/rdata-systems/rdata-server/wiki/5.-Extending-the-functionality)
 
 The package includes standard server.js bootstrap script that you can use.
 
 ## Wiki index:
-- [Json-RPC server implementation](https://github.com/rdata-systems/rdata-server/wiki/Json-RPC-over-Websockets-server-implementation)
-- [Authentication](https://github.com/rdata-systems/rdata-server/wiki/Authentication)
-- [Events](https://github.com/rdata-systems/rdata-server/wiki/Events)
-- [Contexts](https://github.com/rdata-systems/rdata-server/wiki/Contexts)
-- [User Variables](https://github.com/rdata-systems/rdata-server/wiki/User-Variables)
-- [Extending the functionality](https://github.com/rdata-systems/rdata-server/wiki/Extending-the-functionality)
+- [Json-RPC protocol](https://github.com/rdata-systems/rdata-server/wiki/0.-Json-RPC-protocol)
+- [Authentication](https://github.com/rdata-systems/rdata-server/wiki/1.-Authentication)
+- [Events](https://github.com/rdata-systems/rdata-server/wiki/2.-Events)
+- [Contexts](https://github.com/rdata-systems/rdata-server/wiki/3.-Contexts)
+- [User Variables](https://github.com/rdata-systems/rdata-server/wiki/4.-User-Variables)
+- [Extending the functionality](https://github.com/rdata-systems/rdata-server/wiki/5.-Extending-the-functionality)

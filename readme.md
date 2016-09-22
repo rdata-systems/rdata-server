@@ -5,7 +5,7 @@ Based on WebSockets, Json-RPC 2.0 and MongoDB
 [![Build Status](https://travis-ci.org/rdata-systems/rdata-server.svg?branch=master)](https://travis-ci.org/rdata-systems/rdata-server)
 
 ## Basic usage
-~~~~ 
+```javascript
 var RDataServer = require('rdata-server');
 
 var server = new RDataServer({
@@ -14,7 +14,7 @@ var server = new RDataServer({
     dbUrl: 'mongodb://localhost:27017/data',
 });
 server.runServer();
-~~~~ 
+```
 RDataServer options:
 - **host** - Server host
 - **Port** - Server port

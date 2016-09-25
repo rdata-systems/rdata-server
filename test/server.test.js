@@ -104,6 +104,32 @@ describe('RDataServer', function() {
         });
     });
 
+    it('should accept request with string id', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposedAnonymously: {'test': testMethod }});
+        var requstId = "UNIQUEREQUESTGUID123";
+        var testParams = {"testParam": 123};
+        var testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "test",
+            "id": requstId,
+            "params": testParams
+        });
+        server.runServer(function(){
+            var ws = new WebSocket('ws://localhost:'+helper.port);
+            ws.on('open', function open(){
+                ws.send(testRequest);
+            });
+            ws.on('message', function message(data, flags){
+                var answer = JSON.parse(data);
+                assert(answer.id == requstId);
+                assert.deepEqual(answer.result, testParams);
+                server.close(function(error) {
+                    done(error);
+                });
+            });
+        });
+    });
+
     it('should not accept request without valid method', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl});
         var testRequest = JSON.stringify({

@@ -13,6 +13,7 @@
   "license": "MIT",
   "dependencies": {
     "async": "^2.0.1",
+    "guid": "^0.0.12",
     "merge": "^1.2.0",
     "mongodb": "^2.2.6",
     "ws": "^1.1.1"

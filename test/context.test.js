@@ -22,7 +22,7 @@ var validateContext = function (id, data, status, timeStarted, timeEnded, callba
             callback(error);
             return;
         }
-        db.collection(contextCollectionName).find({id: id, status: status}).limit(1).next(function(err, context){
+        db.collection(contextCollectionName).find({_id: id, status: status}).limit(1).next(function(err, context){
             if(err){
                 callback(err);
                 return;

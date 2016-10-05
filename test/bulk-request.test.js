@@ -142,6 +142,77 @@ describe('RDataBulkRequest', function() {
         });
     });
 
+    it('should ignore bulk request inside another bulk request', function(done){
 
+        // Since bulk request doesn't return any responses from the actual requests,
+        // Let's use local variable in this test to check if all requests were successfully executed
+        var testCounter = 0;
+        var testMethod = function(client, params, callback) {
+            testCounter++;
+            callback(null, true);
+        };
+
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposed: {'test': testMethod }});
+        var bulkRequestId = 1;
+
+        // Bulk "test" request, then bulk request with another test request.
+        // This will be used as an array of request for top-level bulk request.
+        var requests = [
+            {
+                "jsonrpc": jsonRpcVersion,
+                "method": "test",
+                "id": 2,
+                "params": {}
+            },
+            {
+                "jsonrpc": jsonRpcVersion,
+                "method": "bulkRequest",
+                "id": 3,
+                "params": {
+                    "requests":[
+                        {
+                            "jsonrpc": jsonRpcVersion,
+                            "method": "test",
+                            "id": 4,
+                            "params": {}
+                        }
+                    ]
+                }
+            }
+        ];
+
+        var testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "bulkRequest",
+            "id": bulkRequestId, // 1
+            "params": {
+                "requests": requests
+            }
+        });
+
+        server.runServer(function(){
+            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                if (error) {
+                    done(error);
+                    return;
+                }
+                ws.send(testRequest);
+
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.id == bulkRequestId);
+                    assert(answer.error);
+                    assert(answer.error.code == (new JsonRpc.JsonRpcErrors.InvalidRequest()).code);
+
+                    // Only first "test" method should be called. Inner bulk request and all it's requests must be ignored.
+                    assert.equal(testCounter, 1);
+
+                    server.close(function (error) {
+                        done(error);
+                    });
+                });
+            });
+        });
+    });
 
 });

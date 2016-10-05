@@ -31,7 +31,8 @@ The package includes standard server.js bootstrap script that you can use.
 - [Events](https://github.com/rdata-systems/rdata-server/wiki/2.-Events)
 - [Contexts](https://github.com/rdata-systems/rdata-server/wiki/3.-Contexts)
 - [User Variables](https://github.com/rdata-systems/rdata-server/wiki/4.-User-Variables)
-- [Extending the functionality](https://github.com/rdata-systems/rdata-server/wiki/5.-Extending-the-functionality)
+- [Batch and Bulk requests](https://github.com/rdata-systems/rdata-server/wiki/5.-Batch-and-Bulk-requests)
+- [Extending the functionality](https://github.com/rdata-systems/rdata-server/wiki/6.-Extending-the-functionality)
 
 ## Examples
 For more examples, see [**test**](https://github.com/rdata-systems/rdata-server/tree/master/test) folder.

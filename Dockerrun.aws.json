@@ -1,0 +1,21 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  
+  "Image": {
+    "Name": "rdata-server",
+    "Update": "true"
+  },
+  
+  "Ports": [
+    {
+      "ContainerPort": "8888"
+    }
+  ],  
+
+  "Volumes": [
+    {
+      "HostDirectory": "/var/app/current",
+      "ContainerDirectory": "/usr/src/app"
+    }
+  ]
+}

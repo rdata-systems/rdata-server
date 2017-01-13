@@ -2,7 +2,13 @@
   "name": "rdata",
   "version": "1.0.0",
   "description": "RData - Data Collection Server",
+  "author": "Leonid Umanskiy",
+  "license": "MIT",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/rdata-systems/rdata-server.git"
+  },
   "directories": {
     "lib": "./lib"
   },
@@ -10,8 +16,6 @@
     "test": "./node_modules/.bin/mocha --reporter spec",
     "start": "node index.js"
   },
-  "author": "Leonid Umanskiy",
-  "license": "MIT",
   "dependencies": {
     "async": "^2.0.1",
     "guid": "^0.0.12",

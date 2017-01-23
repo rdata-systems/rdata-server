@@ -10,13 +10,13 @@ const mocha = require('mocha');
 const beforeEach = mocha.beforeEach;
 const afterEach = mocha.afterEach;
 
-var dbUrlTest = helper.dbUrl;
+let dbUrlTest = helper.dbUrl;
 
 const jsonRpcVersion = helper.jsonRpcVersion;
 
 const contextCollectionName = require('../lib/context').contextCollectionName;
 
-var validateContext = function (id, data, status, timeStarted, timeEnded, callback){
+let validateContext = function validateContext(id, data, status, timeStarted, timeEnded, callback){
     helper.getTestDatabase(function(error, db){
         if(error){
             callback(error);
@@ -33,6 +33,19 @@ var validateContext = function (id, data, status, timeStarted, timeEnded, callba
             if(timeEnded)
                 assert.equal(timeEnded, context.timeEnded);
             assert.deepEqual(context.data, data);
+            callback(null, true);
+        });
+    });
+};
+
+let validateContextChild = function validateContextChild(parentContextId, childContextId, callback){
+    helper.getTestDatabase(function(error, db){
+        if(error) return callback(error);
+        db.collection(contextCollectionName).find({_id: parentContextId}).limit(1).next(function(err, context){
+            if(err) return callback(err);
+            assert(context);
+            assert(context.children);
+            assert(context.children.indexOf(childContextId) > -1);
             callback(null, true);
         });
     });
@@ -87,6 +100,67 @@ describe('RDataContext', function() {
             });
         });
     });
+
+    it('starts a child context with the provided parent context id', function(done){
+        let server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        let parentContext = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "ParentContext",
+            "data": {"testContextInfo": 123}
+        };
+        let childContext = {
+            "id": "111102030405060708090A0B0C0D0E0F",
+            "name": "ChildContext",
+            "parentContextId": parentContext.id,
+            "data": {"testContextInfo": 456}
+        };
+
+        let startParentContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": parentContext.id, "name": parentContext.name, data: parentContext.data},
+            "id": 1
+        });
+
+        let startChildContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": childContext.id, "parentContextId": childContext.parentContextId, "name": childContext.name, data: childContext.data},
+            "id": 2
+        });
+
+        server.runServer(function(){
+            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                if(error){
+                    done(error);
+                    return;
+                }
+
+                ws.send(startParentContextRequest);
+                ws.on('message', function message(data, flags) {
+                    let answer = JSON.parse(data);
+                    if (answer.id == 1) {
+                        ws.send(startChildContextRequest);
+                    } else if (answer.id == 2) {
+                        assert(answer.result);
+                        validateContext(childContext.id, childContext.data, "started", null, null, function (error, result) {
+                            if (error) done(error);
+
+                            validateContextChild(parentContext.id, childContext.id, function(error){
+                                if(error) return done(error);
+
+                                // Close the server
+                                server.close(function (error) {
+                                    done(error);
+                                });
+                            });
+                        });
+                    }
+                });
+            });
+        });
+    });
+
 
     it('starts a context with custom timeStarted', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });

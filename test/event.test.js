@@ -10,13 +10,13 @@ const mocha = require('mocha');
 const beforeEach = mocha.beforeEach;
 const afterEach = mocha.afterEach;
 
-var dbUrlTest = helper.dbUrl;
+let dbUrlTest = helper.dbUrl;
 
 const jsonRpcVersion = helper.jsonRpcVersion;
 
 const eventCollectionName = require('../lib/event').eventCollectionName;
 
-var validateEventLogged = function(eventName, eventData, callback){
+let validateEventLogged = function (eventName, eventData, contextId, callback){
     helper.getTestDatabase(function(error, db){
         if(error){
             callback(error);
@@ -30,19 +30,20 @@ var validateEventLogged = function(eventName, eventData, callback){
             }
             assert(event);
             assert.deepEqual(event.data, eventData);
+            assert.equal(event.contextId, contextId);
             callback(null, true);
         });
     });
 };
 
-var getNumEventsLogged = function(eventName, callback){
+let getNumEventsLogged = function(eventName, callback){
     helper.getTestDatabase(function(error, db){
         if(error){
             callback(error);
             return;
         }
 
-        var cursor = db.collection(eventCollectionName).find({name: eventName});
+        let cursor = db.collection(eventCollectionName).find({name: eventName});
         cursor.count(function(error, count) {
             if(error){
                 callback(error);
@@ -64,14 +65,15 @@ describe('RDataEvent', function() {
     });
 
     it('logs the event', function(done){
-        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
-        var clientDate = new Date().getTime();
-        var eventName = "TestEvent";
-        var eventData = { "clientDate": clientDate };
-        var testRequest = JSON.stringify({
+        let server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        let clientDate = new Date().getTime();
+        let eventName = "TestEvent";
+        let eventData = { "clientDate": clientDate };
+        let contextId = "000000010102020202020202020202";
+        let testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "logEvent",
-            "params": {"id": "000102030405060708090A0B0C0D0E0F", "name": eventName, "data": eventData },
+            "params": {"id": "000102030405060708090A0B0C0D0E0F", "name": eventName, "data": eventData, "contextId": contextId },
             "id": 1
         });
         server.runServer(function(){
@@ -83,18 +85,18 @@ describe('RDataEvent', function() {
 
                 ws.send(testRequest);
                 ws.on('message', function message(data, flags) {
-                    var answer = JSON.parse(data);
+                    let answer = JSON.parse(data);
                     assert(answer.result);
 
                     // Lets find our event in test database
-                    validateEventLogged(eventName, eventData, function(error, result){
-                        if(error){
+                    validateEventLogged(eventName, eventData, contextId, function (error, result) {
+                        if (error) {
                             done(error);
                             return;
                         }
 
                         // Close the server
-                        server.close(function(error) {
+                        server.close(function (error) {
                             done(error);
                         });
                     });
@@ -104,18 +106,18 @@ describe('RDataEvent', function() {
     });
 
     it('logs the same event twice, should not log it second time and return false in the result', function(done){
-        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
-        var clientDate = new Date().getTime();
-        var eventName = "TestEvent";
-        var eventData = { "clientDate": clientDate };
-        var eventId = "000102030405060708090A0B0C0D0E0F";
-        var testRequest1 = JSON.stringify({
+        let server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        let clientDate = new Date().getTime();
+        let eventName = "TestEvent";
+        let eventData = { "clientDate": clientDate };
+        let eventId = "000102030405060708090A0B0C0D0E0F";
+        let testRequest1 = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "logEvent",
             "params": {"id": eventId, "name": eventName, "data": eventData },
             "id": 1
         });
-        var testRequest2 = JSON.stringify({
+        let testRequest2 = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "logEvent",
             "params": {"id": eventId, "name": eventName, "data": eventData },
@@ -130,10 +132,10 @@ describe('RDataEvent', function() {
 
                 ws.send(testRequest1);
                 ws.on('message', function message(data, flags) {
-                    var answer = JSON.parse(data);
+                    let answer = JSON.parse(data);
                     if(answer.id == 1) {
                         // Lets find our event in test database
-                        validateEventLogged(eventName, eventData, function (error, result) {
+                        validateEventLogged(eventName, eventData, null, function (error, result) {
                             if (error) {
                                 done(error);
                                 return;

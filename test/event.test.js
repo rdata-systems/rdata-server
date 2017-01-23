@@ -64,7 +64,7 @@ describe('RDataEvent', function() {
         helper.clearTestDatabase(done);
     });
 
-    it('logs the event', function(done){
+    it('logs the event with the context id', function(done){
         let server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
         let clientDate = new Date().getTime();
         let eventName = "TestEvent";
@@ -104,6 +104,48 @@ describe('RDataEvent', function() {
             });
         });
     });
+
+
+    it('logs the event without the context id', function(done){
+        let server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        let clientDate = new Date().getTime();
+        let eventName = "TestEvent";
+        let eventData = { "clientDate": clientDate };
+        let testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "logEvent",
+            "params": {"id": "000102030405060708090A0B0C0D0E0F", "name": eventName, "data": eventData },
+            "id": 1
+        });
+        server.runServer(function(){
+            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                if(error){
+                    done(error);
+                    return;
+                }
+
+                ws.send(testRequest);
+                ws.on('message', function message(data, flags) {
+                    let answer = JSON.parse(data);
+                    assert(answer.result);
+
+                    // Lets find our event in test database
+                    validateEventLogged(eventName, eventData, null, function (error, result) {
+                        if (error) {
+                            done(error);
+                            return;
+                        }
+
+                        // Close the server
+                        server.close(function (error) {
+                            done(error);
+                        });
+                    });
+                });
+            });
+        });
+    });
+
 
     it('logs the same event twice, should not log it second time and return false in the result', function(done){
         let server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });

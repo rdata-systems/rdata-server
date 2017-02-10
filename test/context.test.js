@@ -10,13 +10,13 @@ const mocha = require('mocha');
 const beforeEach = mocha.beforeEach;
 const afterEach = mocha.afterEach;
 
-let dbUrlTest = helper.dbUrl;
+var dbUrlTest = helper.dbUrl;
 
 const jsonRpcVersion = helper.jsonRpcVersion;
 
 const contextCollectionName = require('../lib/context').contextCollectionName;
 
-let validateContext = function validateContext(id, data, status, timeStarted, timeEnded, callback){
+var validateContext = function validateContext(id, data, status, timeStarted, timeEnded, timeInterrupted, callback){
     helper.getTestDatabase(function(error, db){
         if(error){
             callback(error);
@@ -32,13 +32,16 @@ let validateContext = function validateContext(id, data, status, timeStarted, ti
                 assert.equal(timeStarted, context.timeStarted);
             if(timeEnded)
                 assert.equal(timeEnded, context.timeEnded);
+            if(timeInterrupted)
+                assert.equal(timeInterrupted, context.timeInterrupted)
+
             assert.deepEqual(context.data, data);
             callback(null, true);
         });
     });
 };
 
-let validateContextChild = function validateContextChild(parentContextId, childContextId, callback){
+var validateContextChild = function validateContextChild(parentContextId, childContextId, callback){
     helper.getTestDatabase(function(error, db){
         if(error) return callback(error);
         db.collection(contextCollectionName).find({_id: parentContextId}).limit(1).next(function(err, context){
@@ -86,7 +89,7 @@ describe('RDataContext', function() {
                 ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
                     assert(answer.result);
-                    validateContext(context.id, context.data, "started", null, null, function (error, result) {
+                    validateContext(context.id, context.data, "started", null, null, null, function (error, result) {
                         if (error) {
                             done(error);
                             return;
@@ -102,27 +105,27 @@ describe('RDataContext', function() {
     });
 
     it('starts a child context with the provided parent context id', function(done){
-        let server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
-        let parentContext = {
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var parentContext = {
             "id": "000102030405060708090A0B0C0D0E0F",
             "name": "ParentContext",
             "data": {"testContextInfo": 123}
         };
-        let childContext = {
+        var childContext = {
             "id": "111102030405060708090A0B0C0D0E0F",
             "name": "ChildContext",
             "parentContextId": parentContext.id,
             "data": {"testContextInfo": 456}
         };
 
-        let startParentContextRequest = JSON.stringify({
+        var startParentContextRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "startContext",
             "params": {"id": parentContext.id, "name": parentContext.name, data: parentContext.data},
             "id": 1
         });
 
-        let startChildContextRequest = JSON.stringify({
+        var startChildContextRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "startContext",
             "params": {"id": childContext.id, "parentContextId": childContext.parentContextId, "name": childContext.name, data: childContext.data},
@@ -138,16 +141,16 @@ describe('RDataContext', function() {
 
                 ws.send(startParentContextRequest);
                 ws.on('message', function message(data, flags) {
-                    let answer = JSON.parse(data);
+                    var answer = JSON.parse(data);
                     if (answer.id == 1) {
                         ws.send(startChildContextRequest);
                     } else if (answer.id == 2) {
                         assert(answer.result);
-                        validateContext(childContext.id, childContext.data, "started", null, null, function (error, result) {
+                        validateContext(childContext.id, childContext.data, "started", null, null, null, function (error, result) {
                             if (error) done(error);
 
-                            validateContextChild(parentContext.id, childContext.id, function(error){
-                                if(error) return done(error);
+                            validateContextChild(parentContext.id, childContext.id, function (error) {
+                                if (error) return done(error);
 
                                 // Close the server
                                 server.close(function (error) {
@@ -188,7 +191,7 @@ describe('RDataContext', function() {
                 ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
                     assert(answer.result);
-                    validateContext(context.id, context.data, "started", timeStarted, null, function (error, result) {
+                    validateContext(context.id, context.data, "started", timeStarted, null, null, function (error, result) {
                         if (error) {
                             done(error);
                             return;
@@ -237,7 +240,7 @@ describe('RDataContext', function() {
                         ws.send(endContextRequest);
                     } else if (answer.id == 2){
                         assert(answer);
-                        validateContext(context.id, context.data, "ended", null, null, function (error, result) {
+                        validateContext(context.id, context.data, "ended", null, null, null, function (error, result) {
                             if (error) {
                                 done(error);
                                 return;
@@ -288,7 +291,7 @@ describe('RDataContext', function() {
                         ws.send(endContextRequest);
                     } else if (answer.id == 2){
                         assert(answer);
-                        validateContext(context.id, context.data, "ended", null, timeEnded, function (error, result) {
+                        validateContext(context.id, context.data, "ended", null, timeEnded, null, function (error, result) {
                             if (error) {
                                 done(error);
                                 return;
@@ -304,7 +307,7 @@ describe('RDataContext', function() {
         });
     });
 
-    it('should automatically end non-persistent context when user disconnects', function(done){
+    it('should automatically interrupt contexts when user disconnects', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
         var context = {
             "id": "000102030405060708090A0B0C0D0E0F",
@@ -331,7 +334,7 @@ describe('RDataContext', function() {
 
                     ws.close();
                     server.on('user disconnected', function(connection){
-                        validateContext(context.id, context.data, "ended", null, null, function (error, result) {
+                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, result) {
                             if (error) {
                                 done(error);
                                 return;
@@ -349,7 +352,7 @@ describe('RDataContext', function() {
     });
 
 
-    it('should not end persistent context when user disconnects', function(done){
+    it('restores interrupted contexts', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
         var context = {
             "id": "000102030405060708090A0B0C0D0E0F",
@@ -360,9 +363,16 @@ describe('RDataContext', function() {
         var startContextRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "startContext",
-            "params": {"id": context.id, "name": context.name, "persistent": context.persistent, "data": context.data},
+            "params": {"id": context.id, "name": context.name, "data": context.data},
             "id": 1
         });
+        var restoreContextsRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "restoreContexts",
+            "params": {},
+            "id": 1
+        });
+
         server.runServer(function(){
             helper.connectAndAuthenticate(function authenticated(error, ws) {
                 if(error){
@@ -376,18 +386,36 @@ describe('RDataContext', function() {
                     assert(answer.result);
 
                     ws.close();
-                    server.on('user disconnected', function(connection){
-                        validateContext(context.id, context.data, "started", null, null, function (error, result) {
+                    ws = null;
+
+                    server.on('user disconnected', function (connection) {
+                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, result) {
                             if (error) {
                                 done(error);
                                 return;
                             }
-                            // Close the server
-                            server.close(function (error) {
-                                done(error);
-                            });
-                        });
 
+                            // Reconnect and restore contexts
+                            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                                if (error) {
+                                    done(error);
+                                    return;
+                                }
+
+                                // Send restore context message
+                                ws.send(restoreContextsRequest);
+                                ws.on('message', function message(data, flags) {
+                                    // Validate that the context is restored
+                                    validateContext(context.id, context.data, "started", null, null, null, function (error, result) {
+                                        // Close the server
+                                        server.close(function (error) {
+                                            done(error);
+                                        });
+                                    });
+                                });
+                            });
+
+                        });
                     });
                 });
             });
@@ -444,7 +472,7 @@ describe('RDataContext', function() {
                     } else if(answer.id == 2){
                         ws.send(endParentContextRequest);
                     } else if(answer.id == 3){
-                        validateContext(childContext.id, childContext.data, "ended", null, null, function (error, result) {
+                        validateContext(childContext.id, childContext.data, "ended", null, null, null, function (error, result) {
                             if (error) {
                                 done(error);
                                 return;

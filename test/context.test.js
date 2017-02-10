@@ -388,7 +388,13 @@ describe('RDataContext', function() {
                     ws.close();
                     ws = null;
 
+                    var firstUserDisconnected = false;
                     server.on('user disconnected', function (connection) {
+                        if(firstUserDisconnected)
+                            return;
+                        else
+                            firstUserDisconnected = true;
+
                         validateContext(context.id, context.data, "interrupted", null, null, null, function (error, result) {
                             if (error) {
                                 done(error);
@@ -414,7 +420,6 @@ describe('RDataContext', function() {
                                     });
                                 });
                             });
-
                         });
                     });
                 });

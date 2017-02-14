@@ -69,12 +69,22 @@ describe('RDataEvent', function() {
         var clientDate = new Date().getTime();
         var eventName = "TestEvent";
         var eventData = { "clientDate": clientDate };
-        var contextId = "000000010102020202020202020202";
-        var testRequest = JSON.stringify({
+        var context = {
+            "id": "000000010102020202020202020202",
+            "name": "TestContext",
+            "data": {"testContextInfo": 123},
+        };
+        var startContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, "data": context.data},
+            "id": 1
+        });
+        var logEventRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "logEvent",
-            "params": {"id": "000102030405060708090A0B0C0D0E0F", "name": eventName, "data": eventData, "contextId": contextId },
-            "id": 1
+            "params": {"id": "000102030405060708090A0B0C0D0E0F", "name": eventName, "data": eventData, "contextId": context.id },
+            "id": 2
         });
         server.runServer(function(){
             helper.connectAndAuthenticate(function authenticated(error, ws) {
@@ -83,23 +93,28 @@ describe('RDataEvent', function() {
                     return;
                 }
 
-                ws.send(testRequest);
+                ws.send(startContextRequest);
                 ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
                     assert(answer.result);
 
-                    // Lets find our event in test database
-                    validateEventLogged(eventName, eventData, contextId, function (error, result) {
-                        if (error) {
-                            done(error);
-                            return;
-                        }
+                    if(answer.id == 1) {
+                        ws.send(logEventRequest);
 
-                        // Close the server
-                        server.close(function (error) {
-                            done(error);
+                    } else if (answer.id == 2){
+                        // Lets find our event in test database
+                        validateEventLogged(eventName, eventData, context.id, function (error, result) {
+                            if (error) {
+                                done(error);
+                                return;
+                            }
+
+                            // Close the server
+                            server.close(function (error) {
+                                done(error);
+                            });
                         });
-                    });
+                    }
                 });
             });
         });

@@ -357,8 +357,7 @@ describe('RDataContext', function() {
         var context = {
             "id": "000102030405060708090A0B0C0D0E0F",
             "name": "TestContext",
-            "data": {"testContextInfo": 123},
-            "persistent": true
+            "data": {"testContextInfo": 123}
         };
         var startContextRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
@@ -428,32 +427,182 @@ describe('RDataContext', function() {
     });
 
 
+    it('should restore interrupted context when the context is ended', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var context = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "TestContext",
+            "data": {"testContextInfo": 123},
+        };
+        var startContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, "data": context.data},
+            "id": 1
+        });
+        var endContextsRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "endContext",
+            "params": {"id": context.id},
+            "id": 1
+        });
+
+        server.runServer(function(){
+            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                if(error){
+                    done(error);
+                    return;
+                }
+
+                ws.send(startContextRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.result);
+
+                    ws.close();
+                    ws = null;
+
+                    var firstUserDisconnected = false;
+                    server.on('user disconnected', function (connection) {
+                        if(firstUserDisconnected)
+                            return;
+                        else
+                            firstUserDisconnected = true;
+
+                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, result) {
+                            if (error) {
+                                done(error);
+                                return;
+                            }
+
+                            // Reconnect and restore contexts
+                            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                                if (error) {
+                                    done(error);
+                                    return;
+                                }
+
+                                // Send restore context message
+                                ws.send(endContextsRequest);
+                                ws.on('message', function message(data, flags) {
+                                    // Validate that the context is ended
+                                    validateContext(context.id, context.data, "ended", null, null, null, function (error, result) {
+                                        // Close the server
+                                        server.close(function (error) {
+                                            done(error);
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+
+    it('should restore interrupted context when the event is logged under this context', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var context = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "TestContext",
+            "data": {"testContextInfo": 123}
+        };
+        var startContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, "data": context.data},
+            "id": 1
+        });
+        var logEventRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "logEvent",
+            "params": {"id": "000102030405060708090A0B0C0D0E0F", "name": "testEvent", "data": {"test": "test"}, "contextId": context.id},
+            "id": 1
+        });
+
+        server.runServer(function(){
+            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                if(error){
+                    done(error);
+                    return;
+                }
+
+                ws.send(startContextRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.result);
+
+                    ws.close();
+                    ws = null;
+
+                    var firstUserDisconnected = false;
+                    server.on('user disconnected', function (connection) {
+                        if(firstUserDisconnected)
+                            return;
+                        else
+                            firstUserDisconnected = true;
+
+                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, result) {
+                            if (error) {
+                                done(error);
+                                return;
+                            }
+
+                            // Reconnect and restore contexts
+                            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                                if (error) {
+                                    done(error);
+                                    return;
+                                }
+
+                                // Send restore context message
+                                ws.send(logEventRequest);
+                                ws.on('message', function message(data, flags) {
+                                    var answer = JSON.parse(data);
+                                    assert(answer.result);
+
+                                    // Validate that the context is ended
+                                    validateContext(context.id, context.data, "started", null, null, null, function (error, result) {
+                                        // Close the server
+                                        server.close(function (error) {
+                                            done(error);
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    });
+
 
     it('should end context tree if the parent context is closed', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
         var parentContext = {
             "id": "000102030405060708090A0B0C0D0E0F",
             "name": "ParentContext",
-            "data": {"testContextInfo": 123},
-            "persistent": false
+            "data": {"testContextInfo": 123}
         };
         var childContext = {
             "id": "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
             "name": "ChildContext",
             "data": {"testContextInfo": 456},
-            "persistent": false,
             "parentContextId": parentContext.id
         };
         var startParentContextRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "startContext",
-            "params": {"id": parentContext.id, "name": parentContext.name, "persistent": parentContext.persistent, "data": parentContext.data},
+            "params": {"id": parentContext.id, "name": parentContext.name, "data": parentContext.data},
             "id": 1
         });
         var startChildContextRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "startContext",
-            "params": {"id": childContext.id, "parentContextId": childContext.parentContextId, "name": childContext.name, "persistent": childContext.persistent, "data": childContext.data},
+            "params": {"id": childContext.id, "parentContextId": childContext.parentContextId, "name": childContext.name, "data": childContext.data},
             "id": 2
         });
         var endParentContextRequest = JSON.stringify({

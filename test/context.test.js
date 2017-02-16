@@ -715,4 +715,114 @@ describe('RDataContext', function() {
             });
         });
     });
+
+    it('sets a context data', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var context = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "TestContext",
+            "data": {}
+        };
+        var startContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, data: context.data},
+            "id": 1
+        });
+        var newContextData = {"myData": {"val": 123, "a": 456}};
+        var updateContextDataRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "setContextData",
+            "params": {"id": context.id, "data": newContextData },
+            "id": 2
+        });
+
+        server.runServer(function(){
+            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                if(error){
+                    done(error);
+                    return;
+                }
+
+                ws.send(startContextRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    if(answer.id == 1){
+                        ws.send(updateContextDataRequest);
+
+                    } else if (answer.id == 2){
+                        assert(answer);
+                        validateContext(context.id, newContextData, "started", null, null, null, function (error, result) {
+                            if (error) {
+                                done(error);
+                                return;
+                            }
+                            // Close the server
+                            server.close(function (error) {
+                                done(error);
+                            });
+                        });
+                    }
+                });
+            });
+        });
+    });
+
+    it('updates a value of the context data', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+
+        var contextData =        {"myData": {"val": 123, "a": 456}};
+        var key = "myData.a";
+        var value = 789;
+        var updatedContextData = {"myData": {"val": 123, "a": 789}};
+
+        var context = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "TestContext",
+            "data": contextData
+        };
+        var startContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, data: context.data},
+            "id": 1
+        });
+        var updateContextDataRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "updateContextDataVariable",
+            "params": {"id": context.id, "key": key, "value": value },
+            "id": 2
+        });
+
+        server.runServer(function(){
+            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                if(error){
+                    done(error);
+                    return;
+                }
+
+                ws.send(startContextRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    if(answer.id == 1){
+                        ws.send(updateContextDataRequest);
+
+                    } else if (answer.id == 2){
+                        assert(answer);
+                        validateContext(context.id, updatedContextData, "started", null, null, null, function (error, result) {
+                            if (error) {
+                                done(error);
+                                return;
+                            }
+                            // Close the server
+                            server.close(function (error) {
+                                done(error);
+                            });
+                        });
+                    }
+                });
+            });
+        });
+    });
+
 });

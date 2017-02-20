@@ -80,7 +80,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('should not accept request without id', function(done){
+    it('does not accept request without id', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposed: {'test': testMethod }});
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
@@ -104,7 +104,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('should accept request with string id', function(done){
+    it('accepts request with string id', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposedAnonymously: {'test': testMethod }});
         var requstId = "UNIQUEREQUESTGUID123";
         var testParams = {"testParam": 123};
@@ -130,7 +130,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('should not accept request without valid method', function(done){
+    it('does not accept request without valid method', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl});
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
@@ -159,7 +159,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('should not accept non-anonymous command without authentication', function(done){
+    it('does not accept non-anonymous command without authentication', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposed: {'test': testMethod } });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
@@ -184,7 +184,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('should accept anonymous command without authentication', function(done){
+    it('does accept anonymous command without authentication', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposedAnonymously: {'test': testMethod } });
         var testParams = {"testParam": 123};
         var testRequest = JSON.stringify({
@@ -283,7 +283,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('should accept non-anonymous command after authentication', function(done){
+    it('accepts non-anonymous command after authentication', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposed: {'test': testMethod } } );
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
@@ -309,7 +309,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('should accept non-anonymous command after authentication using custom controller', function(done){
+    it('accepts non-anonymous command after authentication using custom controller', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, controllers: {'custom': CustomController } } );
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
@@ -335,7 +335,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('should accept batch request in array and return multiple responses in array', function(done){
+    it('accepts batch request in array and return multiple responses in array', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposedAnonymously: {'test': testMethod } });
         var requests = [
             {
@@ -373,7 +373,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('should correctly accept batch request with invalid requests and process only valid ones', function(done){
+    it('correctly accepts batch request with invalid requests and process only valid ones', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposedAnonymously: {'test': testMethod } });
         var requests = [
             {},

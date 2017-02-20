@@ -14,7 +14,7 @@ const jsonRpcVersion = helper.jsonRpcVersion;
 const dbUrl = helper.dbUrl;
 
 describe('RDataBulkRequest', function() {
-    it('should execute multiple requests from bulk request', function(done){
+    it('executes multiple requests using bulk request', function(done){
 
         // Since bulk request doesn't return any responses from the actual requests,
         // Let's use local variable in this test to check if all requests were successfully executed
@@ -79,7 +79,7 @@ describe('RDataBulkRequest', function() {
         });
     });
 
-    it('should return an error when at least one actual request in the bulk request is invalid', function(done){
+    it('returns an error when at least one actual request in the bulk request is invalid', function(done){
 
         // Since bulk request doesn't return any responses from the actual requests,
         // Let's use local variable in this test to check if all requests were successfully executed
@@ -142,7 +142,7 @@ describe('RDataBulkRequest', function() {
         });
     });
 
-    it('should ignore bulk request inside another bulk request', function(done){
+    it('ignores bulk request inside another bulk request', function(done){
 
         // Since bulk request doesn't return any responses from the actual requests,
         // Let's use local variable in this test to check if all requests were successfully executed

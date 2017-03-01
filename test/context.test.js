@@ -733,6 +733,7 @@ describe('RDataContext', function() {
                 ws.send(startParentContextRequest);
                 ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
+                    assert(!answer.error, "request failed with error: " + JSON.stringify(answer.error));
                     assert(answer.result);
 
                     if(answer.id == 1){

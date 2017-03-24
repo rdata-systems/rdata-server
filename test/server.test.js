@@ -16,10 +16,11 @@ const testMethod = function(client, params, callback){
     callback(null, params);
 };
 
-var customAuthenticationMethod = function(client, params, callback){
-    client.userId = params.userId;
-    client.authToken = params.authToken;
-    callback(null, client.authToken);
+var customAuthenticationMethod = function(connection, params, callback){
+    connection.authenticate(params.userId, function(err){
+        if(err) return callback(err);
+        return callback(null, true);
+    });
 };
 
 function CustomAuthController(server){
@@ -29,7 +30,7 @@ function CustomAuthController(server){
     var self = this;
     self.server = server;
     self.exposedAnonymously = {
-        'authenticate': customAuthenticationMethod,
+        'authenticate': customAuthenticationMethod
     };
 }
 
@@ -40,7 +41,7 @@ function CustomController(server){
     var self = this;
     self.server = server;
     self.exposed = {
-        'test': testMethod,
+        'test': testMethod
     };
 }
 
@@ -77,6 +78,28 @@ describe('RDataServer', function() {
             server.close(function(error) {
                 done(error);
             });
+        });
+    });
+
+    it('correctly removes connection when user is disconnected', function (done) {
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl });
+        var ws;
+        server.runServer(function(error, result){
+            assert(!error);
+            assert(result);
+            ws = new WebSocket('ws://localhost:'+helper.port);
+        });
+        server.on('user connected', function(client){
+            assert(server.connections.length === 1);
+            ws.close();
+        });
+        server.on('user disconnected', function(){
+            setTimeout(function(){ // Wait for other events to fire. Connection is not removed from the list until then
+                assert(server.connections.length === 0);
+                server.close(function(error) {
+                    done(error);
+                });
+            }, 0);
         });
     });
 
@@ -225,7 +248,8 @@ describe('RDataServer', function() {
             ws.on('message', function message(data, flags){
                 var answer = JSON.parse(data);
                 assert.equal(answer.id, 1);
-                assert(answer.result == true);
+                assert(answer.result);
+                assert(server.connections[0].authenticated);
                 server.close(function(error) {
                     done(error);
                 });
@@ -250,7 +274,8 @@ describe('RDataServer', function() {
             ws.on('message', function message(data, flags){
                 var answer = JSON.parse(data);
                 assert.equal(answer.id, 1);
-                assert(answer.result == token);
+                assert(answer.result);
+                assert(server.connections[0].authenticated);
                 server.close(function(error) {
                     done(error);
                 });
@@ -275,7 +300,8 @@ describe('RDataServer', function() {
             ws.on('message', function message(data, flags){
                 var answer = JSON.parse(data);
                 assert.equal(answer.id, 1);
-                assert(answer.result == token);
+                assert(answer.result);
+                assert(server.connections[0].authenticated);
                 server.close(function(error) {
                     done(error);
                 });

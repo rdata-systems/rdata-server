@@ -44,13 +44,13 @@ module.exports = {
     },
 
     /**
-     * Connects to the server and authenticates using the default authentication method.
+     * Connects to the server and authorizes using the default authorization method.
      * @param {function} callback
      */
-    connectAndAuthenticate: function (callback) {
+    connectAndAuthorize: function (callback) {
         var authRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
-            "method": "authenticate",
+            "method": "authorize",
             "params": {userId: "test"},
             "id": 1
         });

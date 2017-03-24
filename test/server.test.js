@@ -16,8 +16,8 @@ const testMethod = function(client, params, callback){
     callback(null, params);
 };
 
-var customAuthenticationMethod = function(connection, params, callback){
-    connection.authenticate(params.userId, function(err){
+var customAuthorizationMethod = function(connection, params, callback){
+    connection.authorize(params.userId, function(err){
         if(err) return callback(err);
         return callback(null, true);
     });
@@ -30,7 +30,7 @@ function CustomAuthController(server){
     var self = this;
     self.server = server;
     self.exposedAnonymously = {
-        'authenticate': customAuthenticationMethod
+        'authorize': customAuthorizationMethod
     };
 }
 
@@ -162,7 +162,7 @@ describe('RDataServer', function() {
             "id": 1
         });
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -182,7 +182,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('does not accept non-anonymous command without authentication', function(done){
+    it('does not accept non-anonymous command without authorization', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposed: {'test': testMethod } });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
@@ -199,7 +199,7 @@ describe('RDataServer', function() {
                 var answer = JSON.parse(data);
                 assert.equal(answer.id, 1);
                 assert(answer.error);
-                assert(answer.error.code == -31000); // NonAuthenticated
+                assert(answer.error.code == -31000); // NonAuthorized
                 server.close(function(error) {
                     done(error);
                 });
@@ -207,7 +207,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('does accept anonymous command without authentication', function(done){
+    it('does accept anonymous command without authorization', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposedAnonymously: {'test': testMethod } });
         var testParams = {"testParam": 123};
         var testRequest = JSON.stringify({
@@ -232,11 +232,11 @@ describe('RDataServer', function() {
         });
     });
 
-    it('accepts a default authentication request', function(done){
+    it('accepts a default authorization request', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
-            "method": "authenticate",
+            "method": "authorize",
             "params": {"userId": "testUser"},
             "id": 1
         });
@@ -249,7 +249,7 @@ describe('RDataServer', function() {
                 var answer = JSON.parse(data);
                 assert.equal(answer.id, 1);
                 assert(answer.result);
-                assert(server.connections[0].authenticated);
+                assert(server.connections[0].authorized);
                 server.close(function(error) {
                     done(error);
                 });
@@ -257,12 +257,12 @@ describe('RDataServer', function() {
         });
     });
 
-    it('accepts a custom authentication request provided by options.exposedAnonymously', function(done){
+    it('accepts a custom authorization request provided by options.exposedAnonymously', function(done){
         var token = "token123";
-        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposedAnonymously: {'authenticate': customAuthenticationMethod } });
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposedAnonymously: {'authorize': customAuthorizationMethod } });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
-            "method": "authenticate",
+            "method": "authorize",
             "params": {"userId": "testUser", "authToken": token },
             "id": 1
         });
@@ -275,7 +275,7 @@ describe('RDataServer', function() {
                 var answer = JSON.parse(data);
                 assert.equal(answer.id, 1);
                 assert(answer.result);
-                assert(server.connections[0].authenticated);
+                assert(server.connections[0].authorized);
                 server.close(function(error) {
                     done(error);
                 });
@@ -283,12 +283,12 @@ describe('RDataServer', function() {
         });
     });
 
-    it('accepts a custom authentication request provided by options.controllers', function(done){
+    it('accepts a custom authorization request provided by options.controllers', function(done){
         var token = "token123";
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, controllers: {'custom': CustomAuthController } });
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
-            "method": "authenticate",
+            "method": "authorize",
             "params": {"userId": "testUser", "authToken": token },
             "id": 1
         });
@@ -301,7 +301,7 @@ describe('RDataServer', function() {
                 var answer = JSON.parse(data);
                 assert.equal(answer.id, 1);
                 assert(answer.result);
-                assert(server.connections[0].authenticated);
+                assert(server.connections[0].authorized);
                 server.close(function(error) {
                     done(error);
                 });
@@ -309,13 +309,13 @@ describe('RDataServer', function() {
         });
     });
 
-    it('accepts a custom authentication request provided by addController', function(done){
+    it('accepts a custom authorization request provided by addController', function(done){
         var token = "token123";
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl})
         server.addController(CustomAuthController, 'customController');
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
-            "method": "authenticate",
+            "method": "authorize",
             "params": {"userId": "testUser", "authToken": token },
             "id": 1
         });
@@ -328,7 +328,7 @@ describe('RDataServer', function() {
                 var answer = JSON.parse(data);
                 assert.equal(answer.id, 1);
                 assert(answer.result);
-                assert(server.connections[0].authenticated);
+                assert(server.connections[0].authorized);
                 assert(server.connections[0].user.userId === "testUser");
                 server.close(function(error) {
                     done(error);
@@ -337,7 +337,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('accepts non-anonymous command after authentication', function(done){
+    it('accepts non-anonymous command after authorization', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposed: {'test': testMethod } } );
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
@@ -346,7 +346,7 @@ describe('RDataServer', function() {
             "id": 2
         });
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error) {
                     done(error);
                     return;
@@ -363,7 +363,7 @@ describe('RDataServer', function() {
         });
     });
 
-    it('accepts non-anonymous command after authentication using custom controller', function(done){
+    it('accepts non-anonymous command after authorization using custom controller', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, controllers: {'custom': CustomController } } );
         var testRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
@@ -372,7 +372,7 @@ describe('RDataServer', function() {
             "id": 2
         });
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error) {
                     done(error);
                     return;

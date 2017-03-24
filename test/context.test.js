@@ -96,7 +96,7 @@ describe('RDataContext', function() {
             "id": 1
         });
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -150,7 +150,7 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -199,7 +199,7 @@ describe('RDataContext', function() {
             "id": 1
         });
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -245,7 +245,7 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -296,7 +296,7 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -339,7 +339,7 @@ describe('RDataContext', function() {
             "id": 1
         });
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -401,7 +401,7 @@ describe('RDataContext', function() {
         };
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -435,7 +435,7 @@ describe('RDataContext', function() {
                                     }
 
                                     // Reconnect and restore contexts
-                                    helper.connectAndAuthenticate(function authenticated(error, ws) {
+                                    helper.connectAndAuthorize(function authorized(error, ws) {
                                         if (error) {
                                             done(error);
                                             return;
@@ -486,7 +486,7 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -514,7 +514,7 @@ describe('RDataContext', function() {
                             }
 
                             // Reconnect and restore contexts
-                            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                            helper.connectAndAuthorize(function authorized(error, ws) {
                                 if (error) {
                                     done(error);
                                     return;
@@ -561,7 +561,7 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -589,7 +589,7 @@ describe('RDataContext', function() {
                             }
 
                             // Reconnect and restore contexts
-                            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                            helper.connectAndAuthorize(function authorized(error, ws) {
                                 if (error) {
                                     done(error);
                                     return;
@@ -639,7 +639,7 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -667,7 +667,7 @@ describe('RDataContext', function() {
                             }
 
                             // Reconnect and restore contexts
-                            helper.connectAndAuthenticate(function authenticated(error, ws) {
+                            helper.connectAndAuthorize(function authorized(error, ws) {
                                 if (error) {
                                     done(error);
                                     return;
@@ -724,7 +724,7 @@ describe('RDataContext', function() {
             "id": 3
         });
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -779,7 +779,7 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;
@@ -837,7 +837,7 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if(error){
                     done(error);
                     return;

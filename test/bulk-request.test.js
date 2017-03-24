@@ -55,7 +55,7 @@ describe('RDataBulkRequest', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if (error) {
                     done(error);
                     return;
@@ -118,7 +118,7 @@ describe('RDataBulkRequest', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if (error) {
                     done(error);
                     return;
@@ -181,7 +181,7 @@ describe('RDataBulkRequest', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if (error) {
                     done(error);
                     return;
@@ -254,7 +254,7 @@ describe('RDataBulkRequest', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthenticate(function authenticated(error, ws) {
+            helper.connectAndAuthorize(function authorized(error, ws) {
                 if (error) {
                     done(error);
                     return;

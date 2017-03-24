@@ -309,6 +309,34 @@ describe('RDataServer', function() {
         });
     });
 
+    it('accepts a custom authentication request provided by addController', function(done){
+        var token = "token123";
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl})
+        server.addController(CustomAuthController, 'customController');
+        var testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "authenticate",
+            "params": {"userId": "testUser", "authToken": token },
+            "id": 1
+        });
+        server.runServer(function(){
+            var ws = new WebSocket('ws://localhost:'+helper.port);
+            ws.on('open', function open(){
+                ws.send(testRequest);
+            });
+            ws.on('message', function message(data, flags){
+                var answer = JSON.parse(data);
+                assert.equal(answer.id, 1);
+                assert(answer.result);
+                assert(server.connections[0].authenticated);
+                assert(server.connections[0].user.userId === "testUser");
+                server.close(function(error) {
+                    done(error);
+                });
+            });
+        });
+    });
+
     it('accepts non-anonymous command after authentication', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrl, exposed: {'test': testMethod } } );
         var testRequest = JSON.stringify({

@@ -368,6 +368,59 @@ describe('RDataContext', function() {
         });
     });
 
+    it('does not interrupt the connection context tree if the context is ended', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var context = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "TestContext",
+            "data": {"testContextInfo": 123}
+        };
+        var startContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, data: context.data},
+            "id": 1
+        });
+        var endContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "endContext",
+            "params": {"id": context.id, "name": context.name, data: context.data},
+            "id": 2
+        });
+        server.runServer(function(){
+            helper.connectAndAuthorize(function authorized(error, ws) {
+                if(error){
+                    done(error);
+                    return;
+                }
+
+                ws.send(startContextRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.result);
+                    if(answer.id === 1){
+                        ws.send(endContextRequest);
+                    } else {
+                        ws.close();
+                        server.on('user disconnected', function (connection) {
+                            validateContext(context.id, context.data, "ended", null, null, null, function (error, result) {
+                                if (error) {
+                                    done(error);
+                                    return;
+                                }
+                                // Close the server
+                                server.close(function (error) {
+                                    done(error);
+                                });
+                            });
+                        });
+                    }
+                });
+            });
+        });
+    });
+
+
     it('restores the interrupted context tree', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
         var parentContext = {
@@ -465,7 +518,7 @@ describe('RDataContext', function() {
     });
 
 
-    it('restores the interrupted context when unrestored context is ended', function(done){
+    it('ends the interrupted context', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
         var context = {
             "id": "000102030405060708090A0B0C0D0E0F",

@@ -421,6 +421,74 @@ describe('RDataContext', function() {
     });
 
 
+    it('restores the context on the connection object when user manually restores it', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var context = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "TestContext",
+            "data": {"testContextInfo": 123}
+        };
+        var startContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, data: context.data},
+            "id": 1
+        });
+        var restoreContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "restoreContext",
+            "params": {"id": context.id},
+            "id": 2
+        });
+        server.runServer(function(){
+            helper.connectAndAuthorize(function authorized(error, ws) {
+                if(error) return done(error);
+
+                // 1. Start the context
+                ws.send(startContextRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.result);
+
+                    // 2. Close the connection - context automatically interrupts
+                    ws.close();
+                    var firstUserDisconnected = false;
+                    server.on('user disconnected', function (connection) {
+                        if(firstUserDisconnected) return;
+                        firstUserDisconnected = true;
+
+                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, result) {
+                            if (error) {
+                                done(error);
+                                return;
+                            }
+
+                            // 3. Now, reconnect and manually restore the context
+                            helper.connectAndAuthorize(function authorized(error, ws2) {
+                                if (error) return done(error);
+
+                                ws2.send(restoreContextRequest);
+                                ws2.on('message', function message(data, flags) {
+                                    // 4. The connection must have that context and it's status must be started
+                                    assert(server.connections.length === 1);
+                                    assert(server.connections[0].contexts);
+                                    assert(server.connections[0].contexts.length === 1);
+                                    assert(server.connections[0].contexts[0].status === 'started');
+
+                                    // Close the server
+                                    server.close(function (error) {
+                                        done(error);
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+
     it('restores the interrupted context tree', function(done){
         var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
         var parentContext = {

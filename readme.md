@@ -30,7 +30,7 @@ The package includes standard server.js bootstrap script that you can use.
 
 ## Wiki index:
 - [Json-RPC protocol](https://github.com/rdata-systems/rdata-server/wiki/0.-Json-RPC-protocol)
-- [Authentication](https://github.com/rdata-systems/rdata-server/wiki/1.-Authentication)
+- [Authorization](https://github.com/rdata-systems/rdata-server/wiki/1.-Authorization)
 - [Events](https://github.com/rdata-systems/rdata-server/wiki/2.-Events)
 - [Contexts](https://github.com/rdata-systems/rdata-server/wiki/3.-Contexts)
 - [Batch and Bulk requests](https://github.com/rdata-systems/rdata-server/wiki/4.-Batch-and-Bulk-requests)

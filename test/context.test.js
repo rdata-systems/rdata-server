@@ -13,6 +13,7 @@ const afterEach = mocha.afterEach;
 var dbUrlTest = helper.dbUrl;
 
 const jsonRpcVersion = helper.jsonRpcVersion;
+const gameVersion = helper.gameVersion;
 
 const contextCollectionName = require('../lib/context').contextCollectionName;
 
@@ -36,7 +37,7 @@ var validateContext = function validateContext(id, data, status, timeStarted, ti
                 assert.equal(timeInterrupted, context.timeInterrupted);
 
             assert.deepEqual(context.data, data);
-            callback(null, true);
+            callback(null, context);
         });
     });
 };
@@ -96,8 +97,8 @@ describe('RDataContext', function() {
             "id": 1
         });
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -106,7 +107,7 @@ describe('RDataContext', function() {
                 ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
                     assert(answer.result);
-                    validateContext(context.id, context.data, "started", null, null, null, function (error, result) {
+                    validateContext(context.id, context.data, "started", null, null, null, function (error, context) {
                         if (error) {
                             done(error);
                             return;
@@ -150,8 +151,8 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -164,7 +165,7 @@ describe('RDataContext', function() {
                     if (answer.id == 1) {
                         ws.send(startChildContextRequest);
                     } else if (answer.id == 2) {
-                        validateContext(childContext.id, childContext.data, "started", null, null, null, function (error, result) {
+                        validateContext(childContext.id, childContext.data, "started", null, null, null, function (error, context) {
                             if (error) done(error);
 
                             validateContextChild(parentContext.id, childContext.id, function (error) {
@@ -199,8 +200,8 @@ describe('RDataContext', function() {
             "id": 1
         });
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -209,7 +210,7 @@ describe('RDataContext', function() {
                 ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
                     assert(answer.result);
-                    validateContext(context.id, context.data, "started", timeStarted, null, null, function (error, result) {
+                    validateContext(context.id, context.data, "started", timeStarted, null, null, function (error, context) {
                         if (error) {
                             done(error);
                             return;
@@ -245,8 +246,8 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -255,10 +256,10 @@ describe('RDataContext', function() {
                 ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
                     assert(answer.result);
-                    if(answer.id == 1){
+                    if (answer.id == 1) {
                         ws.send(endContextRequest);
-                    } else if (answer.id == 2){
-                        validateContext(context.id, context.data, "ended", null, null, null, function (error, result) {
+                    } else if (answer.id == 2) {
+                        validateContext(context.id, context.data, "ended", null, null, null, function (error, context) {
                             if (error) {
                                 done(error);
                                 return;
@@ -296,8 +297,8 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -306,10 +307,10 @@ describe('RDataContext', function() {
                 ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
                     assert(answer.result);
-                    if(answer.id == 1){
+                    if (answer.id == 1) {
                         ws.send(endContextRequest);
-                    } else if (answer.id == 2){
-                        validateContext(context.id, context.data, "ended", null, timeEnded, null, function (error, result) {
+                    } else if (answer.id == 2) {
+                        validateContext(context.id, context.data, "ended", null, timeEnded, null, function (error, context) {
                             if (error) {
                                 done(error);
                                 return;
@@ -339,8 +340,8 @@ describe('RDataContext', function() {
             "id": 1
         });
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -351,8 +352,8 @@ describe('RDataContext', function() {
                     assert(answer.result);
 
                     ws.close();
-                    server.on('user disconnected', function(connection){
-                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, result) {
+                    server.on('user disconnected', function (connection) {
+                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, context) {
                             if (error) {
                                 done(error);
                                 return;
@@ -388,8 +389,8 @@ describe('RDataContext', function() {
             "id": 2
         });
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -398,12 +399,12 @@ describe('RDataContext', function() {
                 ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
                     assert(answer.result);
-                    if(answer.id === 1){
+                    if (answer.id === 1) {
                         ws.send(endContextRequest);
                     } else {
                         ws.close();
                         server.on('user disconnected', function (connection) {
-                            validateContext(context.id, context.data, "ended", null, null, null, function (error, result) {
+                            validateContext(context.id, context.data, "ended", null, null, null, function (error, context) {
                                 if (error) {
                                     done(error);
                                     return;
@@ -441,8 +442,8 @@ describe('RDataContext', function() {
             "id": 2
         });
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error) return done(error);
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) return done(error);
 
                 // 1. Start the context
                 ws.send(startContextRequest);
@@ -454,17 +455,17 @@ describe('RDataContext', function() {
                     ws.close();
                     var firstUserDisconnected = false;
                     server.on('user disconnected', function (connection) {
-                        if(firstUserDisconnected) return;
+                        if (firstUserDisconnected) return;
                         firstUserDisconnected = true;
 
-                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, result) {
+                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, context) {
                             if (error) {
                                 done(error);
                                 return;
                             }
 
                             // 3. Now, reconnect and manually restore the context
-                            helper.connectAndAuthorize(function authorized(error, ws2) {
+                            helper.connectAndAuthorize(gameVersion, function authorized(error, ws2) {
                                 if (error) return done(error);
 
                                 ws2.send(restoreContextRequest);
@@ -522,8 +523,8 @@ describe('RDataContext', function() {
         };
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -533,11 +534,11 @@ describe('RDataContext', function() {
                     var answer = JSON.parse(data);
                     assert(answer.result);
 
-                    if(answer.id == startParentContextRequest.id){
+                    if (answer.id == startParentContextRequest.id) {
                         ws.send(JSON.stringify(startChildContextRequest));
                     }
 
-                    else if(answer.id == startChildContextRequest.id) {
+                    else if (answer.id == startChildContextRequest.id) {
                         ws.close();
                         ws = null;
 
@@ -556,7 +557,7 @@ describe('RDataContext', function() {
                                     }
 
                                     // Reconnect and restore contexts
-                                    helper.connectAndAuthorize(function authorized(error, ws) {
+                                    helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
                                         if (error) {
                                             done(error);
                                             return;
@@ -566,8 +567,8 @@ describe('RDataContext', function() {
                                         ws.send(JSON.stringify(restoreContextRequest));
                                         ws.on('message', function message(data, flags) {
                                             // Validate that both contexts are restored
-                                            validateContext(parentContext.id, parentContext.data, "started", null, null, null, function (error, result) {
-                                                validateContext(childContext.id, childContext.data, "started", null, null, null, function (error, result) {
+                                            validateContext(parentContext.id, parentContext.data, "started", null, null, null, function (error, context1) {
+                                                validateContext(childContext.id, childContext.data, "started", null, null, null, function (error, context2) {
                                                     // Close the server
                                                     server.close(function (error) {
                                                         done(error);
@@ -607,8 +608,8 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -623,19 +624,19 @@ describe('RDataContext', function() {
 
                     var firstUserDisconnected = false;
                     server.on('user disconnected', function (connection) {
-                        if(firstUserDisconnected)
+                        if (firstUserDisconnected)
                             return;
                         else
                             firstUserDisconnected = true;
 
-                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, result) {
+                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, ctx) {
                             if (error) {
                                 done(error);
                                 return;
                             }
 
                             // Reconnect and restore contexts
-                            helper.connectAndAuthorize(function authorized(error, ws) {
+                            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
                                 if (error) {
                                     done(error);
                                     return;
@@ -645,7 +646,7 @@ describe('RDataContext', function() {
                                 ws.send(endContextsRequest);
                                 ws.on('message', function message(data, flags) {
                                     // Validate that the context is ended
-                                    validateContext(context.id, context.data, "ended", null, null, null, function (error, result) {
+                                    validateContext(context.id, context.data, "ended", null, null, null, function (error, ctx) {
                                         // Close the server
                                         server.close(function (error) {
                                             done(error);
@@ -682,8 +683,8 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -698,19 +699,19 @@ describe('RDataContext', function() {
 
                     var firstUserDisconnected = false;
                     server.on('user disconnected', function (connection) {
-                        if(firstUserDisconnected)
+                        if (firstUserDisconnected)
                             return;
                         else
                             firstUserDisconnected = true;
 
-                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, result) {
+                        validateContext(context.id, context.data, "interrupted", null, null, null, function (error, ctx) {
                             if (error) {
                                 done(error);
                                 return;
                             }
 
                             // Reconnect and restore contexts
-                            helper.connectAndAuthorize(function authorized(error, ws) {
+                            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
                                 if (error) {
                                     done(error);
                                     return;
@@ -723,7 +724,7 @@ describe('RDataContext', function() {
                                     assert(answer.result);
 
                                     // Validate that the context is ended
-                                    validateContext(context.id, context.data, "started", null, null, null, function (error, result) {
+                                    validateContext(context.id, context.data, "started", null, null, null, function (error, ctx) {
                                         // Close the server
                                         server.close(function (error) {
                                             done(error);
@@ -760,8 +761,8 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -776,7 +777,7 @@ describe('RDataContext', function() {
 
                     var firstUserDisconnected = false;
                     server.on('user disconnected', function (connection) {
-                        if(firstUserDisconnected)
+                        if (firstUserDisconnected)
                             return;
                         else
                             firstUserDisconnected = true;
@@ -788,7 +789,7 @@ describe('RDataContext', function() {
                             }
 
                             // Reconnect and restore contexts
-                            helper.connectAndAuthorize(function authorized(error, ws) {
+                            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
                                 if (error) {
                                     done(error);
                                     return;
@@ -798,7 +799,7 @@ describe('RDataContext', function() {
                                 ws.send(endInterruptedContextsRequest);
                                 ws.on('message', function message(data, flags) {
                                     // Validate that the context is restored
-                                    validateContext(context.id, context.data, "ended", null, null, null, function (error, result) {
+                                    validateContext(context.id, context.data, "ended", null, null, null, function (error, context) {
                                         // Close the server
                                         server.close(function (error) {
                                             done(error);
@@ -845,8 +846,8 @@ describe('RDataContext', function() {
             "id": 3
         });
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -857,12 +858,12 @@ describe('RDataContext', function() {
                     assert(!answer.error, "request failed with error: " + JSON.stringify(answer.error));
                     assert(answer.result);
 
-                    if(answer.id == 1){
+                    if (answer.id == 1) {
                         ws.send(startChildContextRequest);
-                    } else if(answer.id == 2){
+                    } else if (answer.id == 2) {
                         ws.send(endParentContextRequest);
-                    } else if(answer.id == 3){
-                        validateContext(childContext.id, childContext.data, "ended", null, null, null, function (error, result) {
+                    } else if (answer.id == 3) {
+                        validateContext(childContext.id, childContext.data, "ended", null, null, null, function (error, context) {
                             if (error) {
                                 done(error);
                                 return;
@@ -900,8 +901,8 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -911,11 +912,11 @@ describe('RDataContext', function() {
                     var answer = JSON.parse(data);
                     assert(answer.result);
 
-                    if(answer.id == 1){
+                    if (answer.id == 1) {
                         ws.send(updateContextDataRequest);
 
-                    } else if (answer.id == 2){
-                        validateContext(context.id, newContextData, "started", null, null, null, function (error, result) {
+                    } else if (answer.id == 2) {
+                        validateContext(context.id, newContextData, "started", null, null, null, function (error, context) {
                             if (error) {
                                 done(error);
                                 return;
@@ -958,8 +959,8 @@ describe('RDataContext', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -969,11 +970,11 @@ describe('RDataContext', function() {
                     var answer = JSON.parse(data);
                     assert(answer.result);
 
-                    if(answer.id == 1){
+                    if (answer.id == 1) {
                         ws.send(updateContextDataRequest);
 
-                    } else if (answer.id == 2){
-                        validateContext(context.id, updatedContextData, "started", null, null, null, function (error, result) {
+                    } else if (answer.id == 2) {
+                        validateContext(context.id, updatedContextData, "started", null, null, null, function (error, context) {
                             if (error) {
                                 done(error);
                                 return;
@@ -988,4 +989,175 @@ describe('RDataContext', function() {
             });
         });
     });
+
+    it('starts a context with the default contextDataVersion', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var context = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "TestContext",
+            "data": {"testContextInfo": 123}
+        };
+        var startContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, data: context.data},
+            "id": 1
+        });
+        server.runServer(function(){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
+                    done(error);
+                    return;
+                }
+
+                ws.send(startContextRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.result);
+                    validateContext(context.id, context.data, "started", null, null, null, function (error, context) {
+                        if (error) {
+                            done(error);
+                            return;
+                        }
+
+                        assert.equal(context.contextDataVersion, 1);
+
+                        // Close the server
+                        server.close(function (error) {
+                            done(error);
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    it('starts a context with custom contextDataVersion', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var context = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "TestContext",
+            "data": {"testContextInfo": 123}
+        };
+        var contextDataVersion = 3;
+        var startContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, data: context.data, contextDataVersion: contextDataVersion},
+            "id": 1
+        });
+        server.runServer(function(){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
+                    done(error);
+                    return;
+                }
+
+                ws.send(startContextRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.result);
+                    validateContext(context.id, context.data, "started", null, null, null, function (error, context) {
+                        if (error) {
+                            done(error);
+                            return;
+                        }
+
+                        assert.equal(context.contextDataVersion, contextDataVersion);
+
+                        // Close the server
+                        server.close(function (error) {
+                            done(error);
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    it('starts a context with the default gameVersion', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var context = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "TestContext",
+            "data": {"testContextInfo": 123}
+        };
+        var startContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, data: context.data},
+            "id": 1
+        });
+        server.runServer(function(){
+            helper.connectAndAuthorize(null, function authorized(error, ws) {
+                if (error) {
+                    done(error);
+                    return;
+                }
+
+                ws.send(startContextRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.result);
+                    validateContext(context.id, context.data, "started", null, null, null, function (error, context) {
+                        if (error) {
+                            done(error);
+                            return;
+                        }
+
+                        assert.equal(context.gameVersion, null);
+
+                        // Close the server
+                        server.close(function (error) {
+                            done(error);
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    it('starts a context with custom gameVersion', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var context = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "TestContext",
+            "data": {"testContextInfo": 123}
+        };
+        var gameVersion = 5;
+        var startContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, data: context.data, gameVersion: gameVersion},
+            "id": 1
+        });
+        server.runServer(function(){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
+                    done(error);
+                    return;
+                }
+
+                ws.send(startContextRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.result);
+                    validateContext(context.id, context.data, "started", null, null, null, function (error, context) {
+                        if (error) {
+                            done(error);
+                            return;
+                        }
+
+                        assert.equal(context.gameVersion, gameVersion);
+
+                        // Close the server
+                        server.close(function (error) {
+                            done(error);
+                        });
+                    });
+                });
+            });
+        });
+    });
+
 });

@@ -8,6 +8,7 @@ const mocha = require('mocha');
 const beforeEach = mocha.beforeEach;
 const afterEach = mocha.afterEach;
 
+const gameVersion = helper.gameVersion;
 const jsonRpcVersion = helper.jsonRpcVersion;
 const dbUrl = helper.dbUrl;
 
@@ -17,7 +18,7 @@ const testMethod = function(client, params, callback){
 };
 
 var customAuthorizationMethod = function(connection, params, callback){
-    connection.authorize(params.userId, function(err){
+    connection.authorize(params.userId, params.gameVersion, function(err){
         if(err) return callback(err);
         return callback(null, true);
     });
@@ -162,19 +163,19 @@ describe('RDataServer', function() {
             "id": 1
         });
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
 
                 ws.send(testRequest);
-                ws.on('message', function message(data, flags){
+                ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
                     assert(answer.id == 1);
                     assert(answer.error);
                     assert(answer.error.code == (new JsonRpc.JsonRpcErrors.MethodNotFound()).code);
-                    server.close(function(error) {
+                    server.close(function (error) {
                         done(error);
                     });
                 });
@@ -346,16 +347,16 @@ describe('RDataServer', function() {
             "id": 2
         });
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error) {
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
                 ws.send(testRequest);
-                ws.on('message', function message(data, flags){
+                ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
                     assert.equal(answer.result.testParam, 123);
-                    server.close(function(error) {
+                    server.close(function (error) {
                         done(error);
                     });
                 });
@@ -372,16 +373,16 @@ describe('RDataServer', function() {
             "id": 2
         });
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error) {
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
                 ws.send(testRequest);
-                ws.on('message', function message(data, flags){
+                ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
                     assert.equal(answer.result.testParam, 123);
-                    server.close(function(error) {
+                    server.close(function (error) {
                         done(error);
                     });
                 });

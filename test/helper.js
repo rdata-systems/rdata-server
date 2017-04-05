@@ -12,6 +12,7 @@ module.exports = {
     jsonRpcVersion: jsonRpcVersion,
     port: 8899,
     dbUrl: dbUrl,
+    gameVersion: 1,
 
     /**
      * Clears the test database
@@ -45,13 +46,14 @@ module.exports = {
 
     /**
      * Connects to the server and authorizes using the default authorization method.
+     * @param gameVersion
      * @param {function} callback
      */
-    connectAndAuthorize: function (callback) {
+    connectAndAuthorize: function (gameVersion, callback) {
         var authRequest = JSON.stringify({
             "jsonrpc": jsonRpcVersion,
             "method": "authorize",
-            "params": {userId: "test"},
+            "params": {userId: "test", gameVersion: gameVersion},
             "id": 1
         });
         var ws = new WebSocket('ws://localhost:' + module.exports.port);

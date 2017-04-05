@@ -13,6 +13,7 @@ const afterEach = mocha.afterEach;
 var dbUrlTest = helper.dbUrl;
 
 const jsonRpcVersion = helper.jsonRpcVersion;
+const gameVersion = helper.gameVersion;
 
 const eventCollectionName = require('../lib/event').eventCollectionName;
 
@@ -31,7 +32,7 @@ var validateEventLogged = function (eventName, eventData, contextId, callback){
             assert(event);
             assert.deepEqual(event.data, eventData);
             assert.equal(event.contextId, contextId);
-            callback(null, true);
+            callback(null, event);
         });
     });
 };
@@ -87,8 +88,8 @@ describe('RDataEvent', function() {
             "id": 2
         });
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -98,12 +99,12 @@ describe('RDataEvent', function() {
                     var answer = JSON.parse(data);
                     assert(answer.result);
 
-                    if(answer.id == 1) {
+                    if (answer.id == 1) {
                         ws.send(logEventRequest);
 
-                    } else if (answer.id == 2){
+                    } else if (answer.id == 2) {
                         // Lets find our event in test database
-                        validateEventLogged(eventName, eventData, context.id, function (error, result) {
+                        validateEventLogged(eventName, eventData, context.id, function (error, event) {
                             if (error) {
                                 done(error);
                                 return;
@@ -133,8 +134,8 @@ describe('RDataEvent', function() {
             "id": 1
         });
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -145,7 +146,7 @@ describe('RDataEvent', function() {
                     assert(answer.result);
 
                     // Lets find our event in test database
-                    validateEventLogged(eventName, eventData, null, function (error, result) {
+                    validateEventLogged(eventName, eventData, null, function (error, event) {
                         if (error) {
                             done(error);
                             return;
@@ -181,8 +182,8 @@ describe('RDataEvent', function() {
             "id": 2
         });
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
-                if(error){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
                     done(error);
                     return;
                 }
@@ -190,9 +191,9 @@ describe('RDataEvent', function() {
                 ws.send(testRequest1);
                 ws.on('message', function message(data, flags) {
                     var answer = JSON.parse(data);
-                    if(answer.id == 1) {
+                    if (answer.id == 1) {
                         // Lets find our event in test database
-                        validateEventLogged(eventName, eventData, null, function (error, result) {
+                        validateEventLogged(eventName, eventData, null, function (error, event) {
                             if (error) {
                                 done(error);
                                 return;
@@ -201,13 +202,13 @@ describe('RDataEvent', function() {
                             // Now, let's log second event
                             ws.send(testRequest2);
                         });
-                    } else if(answer.id == 2){
+                    } else if (answer.id == 2) {
                         // Answer result must be false
                         assert.equal(answer.result, false);
 
                         // Check that we only have 1 event in the database
-                        getNumEventsLogged(eventName, function(err, count){
-                            if(err){
+                        getNumEventsLogged(eventName, function (err, count) {
+                            if (err) {
                                 done(err);
                                 return;
                             }
@@ -221,6 +222,176 @@ describe('RDataEvent', function() {
 
                         });
                     }
+                });
+            });
+        });
+    });
+
+    it('logs the event with the default eventDataVersion', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var clientDate = new Date().getTime();
+        var eventName = "TestEvent";
+        var eventData = { "clientDate": clientDate };
+        var testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "logEvent",
+            "params": {"id": "000102030405060708090A0B0C0D0E0F", "name": eventName, "data": eventData },
+            "id": 1
+        });
+        server.runServer(function(){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
+                    done(error);
+                    return;
+                }
+
+                ws.send(testRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.result);
+
+                    // Lets find our event in test database
+                    validateEventLogged(eventName, eventData, null, function (error, event) {
+                        if (error) {
+                            done(error);
+                            return;
+                        }
+
+                        assert.equal(event.eventDataVersion, 1);
+
+                        // Close the server
+                        server.close(function (error) {
+                            done(error);
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    it('logs the event with custom eventDataVersion', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var clientDate = new Date().getTime();
+        var eventName = "TestEvent";
+        var eventData = { "clientDate": clientDate };
+        var eventDataVersion = 2;
+        var testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "logEvent",
+            "params": {"id": "000102030405060708090A0B0C0D0E0F", "name": eventName, "data": eventData, "eventDataVersion": eventDataVersion },
+            "id": 1
+        });
+        server.runServer(function(){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
+                    done(error);
+                    return;
+                }
+
+                ws.send(testRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.result);
+
+                    // Lets find our event in test database
+                    validateEventLogged(eventName, eventData, null, function (error, event) {
+                        if (error) {
+                            done(error);
+                            return;
+                        }
+
+                        assert.equal(event.eventDataVersion, eventDataVersion);
+
+                        // Close the server
+                        server.close(function (error) {
+                            done(error);
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    it('logs the event with the default gameVersion', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var clientDate = new Date().getTime();
+        var eventName = "TestEvent";
+        var eventData = { "clientDate": clientDate };
+        var testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "logEvent",
+            "params": {"id": "000102030405060708090A0B0C0D0E0F", "name": eventName, "data": eventData },
+            "id": 1
+        });
+        server.runServer(function(){
+            helper.connectAndAuthorize(null, function authorized(error, ws) {
+                if (error) {
+                    done(error);
+                    return;
+                }
+
+                ws.send(testRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.result);
+
+                    // Lets find our event in test database
+                    validateEventLogged(eventName, eventData, null, function (error, event) {
+                        if (error) {
+                            done(error);
+                            return;
+                        }
+
+                        assert.equal(event.gameVersion, 1);
+
+                        // Close the server
+                        server.close(function (error) {
+                            done(error);
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    it('logs the event with custom gameVersion', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var clientDate = new Date().getTime();
+        var eventName = "TestEvent";
+        var eventData = { "clientDate": clientDate };
+        var gameVersion = 2;
+        var testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "logEvent",
+            "params": {"id": "000102030405060708090A0B0C0D0E0F", "name": eventName, "data": eventData },
+            "id": 1
+        });
+        server.runServer(function(){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
+                    done(error);
+                    return;
+                }
+
+                ws.send(testRequest);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    assert(answer.result);
+
+                    // Lets find our event in test database
+                    validateEventLogged(eventName, eventData, null, function (error, event) {
+                        if (error) {
+                            done(error);
+                            return;
+                        }
+
+                        assert.equal(event.gameVersion, gameVersion);
+
+                        // Close the server
+                        server.close(function (error) {
+                            done(error);
+                        });
+                    });
                 });
             });
         });

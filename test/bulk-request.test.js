@@ -11,6 +11,7 @@ const assert = require('assert');
 const mocha = require('mocha');
 
 const jsonRpcVersion = helper.jsonRpcVersion;
+const gameVersion = helper.gameVersion;
 const dbUrl = helper.dbUrl;
 
 describe('RDataBulkRequest', function() {
@@ -55,7 +56,7 @@ describe('RDataBulkRequest', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
                 if (error) {
                     done(error);
                     return;
@@ -118,7 +119,7 @@ describe('RDataBulkRequest', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
                 if (error) {
                     done(error);
                     return;
@@ -181,7 +182,7 @@ describe('RDataBulkRequest', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
                 if (error) {
                     done(error);
                     return;
@@ -254,7 +255,7 @@ describe('RDataBulkRequest', function() {
         });
 
         server.runServer(function(){
-            helper.connectAndAuthorize(function authorized(error, ws) {
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
                 if (error) {
                     done(error);
                     return;

@@ -25,6 +25,8 @@ RDataServer options:
 - **exposed** - dictionary with exposed methods. Contains methodName and method. See: [Extending the functionality](https://github.com/rdata-systems/rdata-server/wiki/5.-Extending-the-functionality)
 - **exposedAnonymously** - dictionary with anonymously exposed methods. See: [Extending the functionality](https://github.com/rdata-systems/rdata-server/wiki/5.-Extending-the-functionality)
 - **controllers** - dictionary with custom controllers. See: [Extending the functionality](https://github.com/rdata-systems/rdata-server/wiki/5.-Extending-the-functionality)
+- **server** - instance of [websockets/ws](https://github.com/websockets/ws) WebSocket.Server. If not provided, it will be created during initialization with the options provided.
+- **location** - location to use. If provided, only connections made at that location will be listened
 
 The package includes standard server.js bootstrap script that you can use.
 

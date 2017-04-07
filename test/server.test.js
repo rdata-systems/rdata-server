@@ -478,5 +478,81 @@ describe('RDataServer', function() {
         });
     });
 
+    it('runs server with specified websocket server', function(done){
+        const wss = new WebSocket.Server({ port: ++helper.port });
+        var server = new RDataServer({ dbUrl: dbUrl, exposedAnonymously: {'test': testMethod }, server: wss });
+        var requstId = "UNIQUEREQUESTGUID123";
+        var testParams = {"testParam": 123};
+        var testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "test",
+            "id": requstId,
+            "params": testParams
+        });
+        server.runServer(function(){
+            var ws = new WebSocket('ws://localhost:'+helper.port);
+            ws.on('open', function open(){
+                ws.send(testRequest);
+            });
+            ws.on('message', function message(data, flags){
+                var answer = JSON.parse(data);
+                assert(answer.id == requstId);
+                assert.deepEqual(answer.result, testParams);
+                server.close(function(error) {
+                    done(error);
+                });
+            });
+        });
+    });
 
+    it('runs multiple rdata servers using one websocket server and different locations', function(done){
+        const wss = new WebSocket.Server({ port: ++helper.port });
+        const location1 = '/game1';
+        const location2 = '/game2';
+        var server1 = new RDataServer({ location: location1, dbUrl: dbUrl, exposedAnonymously: {'test': testMethod }, server: wss });
+        var server2 = new RDataServer({ location: location2, dbUrl: dbUrl, server: wss });
+        var requstId = "UNIQUEREQUESTGUID123";
+        var testParams = {"testParam": 123};
+        var testRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "test",
+            "id": requstId,
+            "params": testParams
+        });
+
+        server1.runServer(function(){
+            server2.runServer(function(){
+                // Test server 1
+                var ws1 = new WebSocket('ws://localhost:'+helper.port+location1);
+                ws1.on('open', function open(){
+                    ws1.send(testRequest);
+                });
+                ws1.on('message', function message(data, flags){
+                    var answer = JSON.parse(data);
+                    assert(answer.id === requstId);
+                    assert.deepEqual(answer.result, testParams);
+
+                    // Test server 2
+                    var ws2 = new WebSocket('ws://localhost:'+helper.port+location2);
+                    ws2.on('open', function open(){
+                        ws2.send(testRequest);
+                        ws2.on('message', function message(data, flags) {
+                            var answer = JSON.parse(data);
+                            assert(answer.id === requstId);
+                            assert(answer.error); // Should error out since we didn't expose method on the second server
+                            assert(answer.error.code === (new JsonRpc.JsonRpcErrors.MethodNotFound()).code);
+
+                            server1.close(function(error) {
+                                if(error) return done(error);
+                                server2.close(function(error) {
+                                    return done(error);
+                                });
+                            });
+
+                        });
+                    });
+                });
+            });
+        });
+    });
 });

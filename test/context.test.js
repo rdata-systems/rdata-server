@@ -162,14 +162,19 @@ describe('RDataContext', function() {
                     var answer = JSON.parse(data);
                     assert(answer.result);
 
-                    if (answer.id == 1) {
+                    if (answer.id === 1) {
                         ws.send(startChildContextRequest);
-                    } else if (answer.id == 2) {
-                        validateContext(childContext.id, childContext.data, "started", null, null, null, function (error, context) {
+                    } else if (answer.id === 2) {
+                        validateContext(childContext.id, childContext.data, "started", null, null, null, function (error, childCtx) {
                             if (error) done(error);
 
-                            validateContextChild(parentContext.id, childContext.id, function (error) {
-                                if (error) return done(error);
+                            validateContextChild(parentContext.id, childContext.id, function (error, result) {
+                                if (error) return done(error)
+
+                                // Check the "path" of the child context
+                                assert(childCtx.path, "child context doesn't have path");
+                                assert.equal(childCtx.path.length, 1, "child context's length is not 1");
+                                assert.equal(childCtx.path[0], parentContext.id, "child context path must contain parent context id");
 
                                 // Close the server
                                 server.close(function (error) {

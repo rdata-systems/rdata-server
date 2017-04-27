@@ -1,6 +1,6 @@
 {
-  "name": "rdata",
-  "version": "1.0.2",
+  "name": "rdata-server",
+  "version": "1.0.3",
   "description": "RData - Data Collection Server",
   "author": "Leonid Umanskiy",
   "license": "MIT",

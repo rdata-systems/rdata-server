@@ -5,6 +5,7 @@
   "author": "Leonid Umanskiy",
   "license": "MIT",
   "main": "index.js",
+  "readme": "README.md",np
   "repository": {
     "type": "git",
     "url": "git://github.com/rdata-systems/rdata-server.git"

@@ -18,8 +18,8 @@ const testMethod = function(client, params, callback){
 };
 
 var customAuthorizationMethod = function(connection, params, callback){
-    connection.authorize(params.userId, params.gameVersion, function(err){
-        if(err) return callback(err);
+    connection.authorize(params.userId, params.gameVersion, params.userPayload || null, function (err) {
+        if (err) return callback(err);
         return callback(null, true);
     });
 };

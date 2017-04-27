@@ -1165,4 +1165,59 @@ describe('RDataContext', function() {
         });
     });
 
+    it('starts a context with custom user payload', function(done){
+        var customAuthorizationMethod = function customAuthorizationMethod(connection, params, callback){
+            connection.authorize(params.userId, params.gameVersion, params.customPayloadField || null, function (err) {
+                if (err) return callback(err);
+                return callback(null, true);
+            });
+        };
+
+        var token = "token123";
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest, exposedAnonymously: {'authorize': customAuthorizationMethod } });
+        var customPayload = { "userGroups": [1,2,3] };
+        var authenticateWithPayloadRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "authorize",
+            "params": {"userId": "testUser", "authToken": token, "customPayloadField": customPayload },
+            "id": 1
+        });
+
+        var context = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "TestContext",
+            "data": {"testContextInfo": 123}
+        };
+        var startContextRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, data: context.data},
+            "id": 2
+        });
+
+        server.runServer(function(){
+            var ws = new WebSocket('ws://localhost:'+helper.port);
+            ws.on('open', function open(){
+                ws.send(authenticateWithPayloadRequest);
+            });
+            ws.on('message', function message(data, flags){
+                var answer = JSON.parse(data);
+                if(answer.id === 1) {
+                    assert(answer.result);
+                    assert(server.connections[0].authorized);
+
+                    ws.send(startContextRequest);
+                }
+                else if(answer.id === 2){
+                    assert(answer.result);
+                    validateContext(context.id, context.data, "started", null, null, null, function (error, ctx) {
+                        assert.deepEqual(ctx.userPayload, customPayload);
+                        server.close(function (error) {
+                            done(error);
+                        });
+                    });
+                }
+            });
+        });
+    });
 });

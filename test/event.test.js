@@ -396,4 +396,58 @@ describe('RDataEvent', function() {
             });
         });
     });
+
+    it('logs an event with custom user payload', function(done){
+        var customAuthorizationMethod = function customAuthorizationMethod(connection, params, callback){
+            connection.authorize(params.userId, params.gameVersion, params.customPayloadField || null, function (err) {
+                if (err) return callback(err);
+                return callback(null, true);
+            });
+        };
+
+        var token = "token123";
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest, exposedAnonymously: {'authorize': customAuthorizationMethod } });
+        var customPayload = { "userGroups": [1,2,3] };
+        var authenticateWithPayloadRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "authorize",
+            "params": {"userId": "testUser", "authToken": token, "customPayloadField": customPayload },
+            "id": 1
+        });
+
+        var clientDate = new Date().getTime();
+        var eventName = "TestEvent";
+        var eventData = { "clientDate": clientDate };
+        var logEventRequest = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "logEvent",
+            "params": {"id": "000102030405060708090A0B0C0D0E0F", "name": eventName, "data": eventData },
+            "id": 2
+        });
+
+        server.runServer(function(){
+            var ws = new WebSocket('ws://localhost:'+helper.port);
+            ws.on('open', function open(){
+                ws.send(authenticateWithPayloadRequest);
+            });
+            ws.on('message', function message(data, flags){
+                var answer = JSON.parse(data);
+                if(answer.id === 1) {
+                    assert(answer.result);
+                    assert(server.connections[0].authorized);
+
+                    ws.send(logEventRequest);
+                }
+                else if(answer.id === 2){
+                    assert(answer.result);
+                    validateEventLogged(eventName, eventData, null, function (error, event) {
+                        assert.deepEqual(event.userPayload, customPayload);
+                        server.close(function (error) {
+                            done(error);
+                        });
+                    });
+                }
+            });
+        });
+    });
 });

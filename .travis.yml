@@ -1,8 +1,15 @@
 language: node_js
 node_js:
-  - "node"
-
+- node
 services:
-  - mongodb
+- mongodb
 env:
-  - DB_URL_TEST=mongodb://localhost:27017/test
+- DB_URL_TEST=mongodb://localhost:27017/test
+deploy:
+  provider: npm
+  email: me@leonidumanskiy.com
+  api_key:
+    secure: HUi0jJIDidQZh3Hz2Lg8ZmQT4XFsGyHhVTHedhZFBvmqLjeZmWI58cxcIRYAm3RvGof7ZD4CuC8hADZlgy1k4XIBnkzXjy0ZPYskHhvCfE3vYvACpaWcljazUb3R7qmVfsYxEigG2w4VMhnHOTqEwGbBfQvVT2cMRrHKp+g7KjxX6Oaov4HgweqMztVPvYB1qb4AgI6ppKEPm17n5B+R9X1jO5hN+fYZPSpViCVb9T+wYUDrSnK9CIyLNG+IhGCoBl+SKH0lQXiIGuYqZGVoW7yNQCSTfITTz/2PZ5VoOo5Zd6RhBpZ3MplG1PCgpZjuGGK/ZOxP0KXdyoW+swiCOUcs8KVU8fduDGy4YXUOM2aU/3ZKrF6s8Uy6BkyANtHaTPh0DvfZMMRVAqSKhW65bNUktgJP1LFcjSkN6jMe9+2mVXAjhCe7DAfqaC7s8jF4h9bwwn4/toTfST9tI34q+oVJhZ7ZpalLQLgcdYNyqV1fypuqeYAVmuTX28rigJTYOtBAiNnxbnC3pPDrMQNmRaKrERYaD/X0ke24xrcFqa+Xon4lHN+MvgKB7C64LMHXNPRR9D0+1mBRi7KR4LjVSwo7in0+w2jtFAwBwldO1cb6NQlFDVg70/Se4UP8a0e4z5YMGFSkpDJPJDUtjWiHajkdvb4uY0Bicy77//D+WJc=
+  on:
+    tags: true
+    repo: rdata-systems/rdata-server

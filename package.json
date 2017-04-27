@@ -1,11 +1,11 @@
 {
   "name": "rdata-server",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "RData - Data Collection Server",
   "author": "Leonid Umanskiy",
   "license": "MIT",
   "main": "index.js",
-  "readme": "README.md",np
+  "readme": "README.md",
   "repository": {
     "type": "git",
     "url": "git://github.com/rdata-systems/rdata-server.git"

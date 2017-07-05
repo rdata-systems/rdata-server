@@ -7,6 +7,7 @@ const helper = require('./helper');
 const WebSocket = require('ws');
 const assert = require('assert');
 const mocha = require('mocha');
+const errors = require('../lib/errors');
 const beforeEach = mocha.beforeEach;
 const afterEach = mocha.afterEach;
 
@@ -117,6 +118,48 @@ describe('RDataContext', function() {
                             done(error);
                         });
                     });
+                });
+            });
+        });
+    });
+
+    it('returns a context validation error when creating the same context twice', function(done){
+        var server = new RDataServer({ port: ++helper.port, dbUrl: dbUrlTest });
+        var context = {
+            "id": "000102030405060708090A0B0C0D0E0F",
+            "name": "TestContext",
+            "data": {"testContextInfo": 123}
+        };
+        var startContextRequest1 = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, data: context.data},
+            "id": 1
+        });
+        var startContextRequest2 = JSON.stringify({
+            "jsonrpc": jsonRpcVersion,
+            "method": "startContext",
+            "params": {"id": context.id, "name": context.name, data: context.data},
+            "id": 2
+        });
+        server.runServer(function(){
+            helper.connectAndAuthorize(gameVersion, function authorized(error, ws) {
+                if (error) {
+                    done(error);
+                    return;
+                }
+
+                ws.send(startContextRequest1);
+                ws.on('message', function message(data, flags) {
+                    var answer = JSON.parse(data);
+                    if(answer.id === 1) {
+                        assert(answer.result);
+                        ws.send(startContextRequest2);
+                    } else {
+                        assert(answer.error);
+                        assert.equal(answer.error.data, (new errors.Exceptions.ContextValidationError()).message);
+                        done();
+                    }
                 });
             });
         });
